@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+.yarn
+*.config.js
+*.config.ts
+.pnp.*
+
