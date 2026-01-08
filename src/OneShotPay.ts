@@ -105,10 +105,11 @@ export class OneShotPay {
 
       // Add WebAuthn permissions to the iframe for passkey support
       // These permissions are required for navigator.credentials.get() and create() to work in iframes
+      // For cross-origin iframes, we need to use the format: feature-name=*
       if (child.frame && child.frame instanceof HTMLIFrameElement) {
         child.frame.setAttribute(
           "allow",
-          "publickey-credentials-get publickey-credentials-create",
+          "publickey-credentials-get=*; publickey-credentials-create=*",
         );
       }
 
