@@ -1,12 +1,9 @@
 import { IUserModel } from "types/models";
 import {
-  AccountRecoveryId,
-  AccountRecoveryPhrase,
   BigNumberString,
   EVMAccountAddress,
   JSONString,
   UnixTimestamp,
-  UserId,
   Username,
 } from "types/primitives";
 
@@ -36,21 +33,6 @@ export interface ISignInParams {
   username: Username;
 }
 
-export interface ISignInWithRecoveryPhraseParams {
-  accountRecoveryId: AccountRecoveryId;
-  accountRecoveryPhrase: AccountRecoveryPhrase;
-}
-
-export interface IStoreEncryptedEvmPrivateKeyParams {
-  passphrase: string;
-  userId: UserId;
-}
-
-export interface IStoreEncryptedEvmPrivateKeyResponse {
-  success: boolean;
-  accountRecoveryId?: AccountRecoveryId;
-  error?: string;
-}
 
 export interface IGetERC3009SignatureParams {
   destinationAddress: EVMAccountAddress;

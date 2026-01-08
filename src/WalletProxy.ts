@@ -1,4 +1,4 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import { errAsync, ResultAsync } from "neverthrow";
 import Postmate from "postmate";
 
 import {
@@ -9,9 +9,6 @@ import {
   IRPCWrapperParams,
   IRPCWrapperReturn,
   ISignInParams,
-  ISignInWithRecoveryPhraseParams,
-  IStoreEncryptedEvmPrivateKeyParams,
-  IStoreEncryptedEvmPrivateKeyResponse,
   rpcCallbackEventName,
 } from "ProxyTypes";
 import { ObjectUtils } from "utils/ObjectUtils";
@@ -21,13 +18,10 @@ import {
 } from "types/domain";
 import { BaseError, ProxyError } from "types/errors";
 import {
-  AccountRecoveryId,
-  AccountRecoveryPhrase,
   BigNumberString,
   EVMAccountAddress,
   JSONString,
   UnixTimestamp,
-  UserId,
   Username,
 } from "types/primitives";
 import { ELocale } from "types/enum";
@@ -206,32 +200,6 @@ export class WalletProxy {
     } satisfies ISignInParams);
   }
 
-  public signInWithRecoveryPhrase(
-    accountRecoveryId: AccountRecoveryId,
-    accountRecoveryPhrase: AccountRecoveryPhrase,
-  ): ResultAsync<IAuthenticationResult, ProxyError> {
-    return this.rpcCall<IAuthenticationResult, object>(
-      "signInWithRecoveryPhrase",
-      {
-        accountRecoveryId,
-        accountRecoveryPhrase,
-      } satisfies ISignInWithRecoveryPhraseParams,
-    );
-  }
-
-  public storeEncryptedEvmPrivateKey(
-    passphrase: string,
-    userId: UserId,
-  ): ResultAsync<IStoreEncryptedEvmPrivateKeyResponse, ProxyError> {
-    return this.rpcCall<
-      IStoreEncryptedEvmPrivateKeyResponse,
-      IStoreEncryptedEvmPrivateKeyParams
-    >("storeEncryptedEvmPrivateKey", {
-      passphrase,
-      userId,
-    } satisfies IStoreEncryptedEvmPrivateKeyParams);
-  }
-
   public getERC3009Signature(
     destinationAddress: EVMAccountAddress,
     amount: BigNumberString,
@@ -241,12 +209,16 @@ export class WalletProxy {
     return this.rpcCall<
       ISignedERC3009TransferWithAuthorization,
       IGetERC3009SignatureParams
-    >("getERC3009Signature", {
-      destinationAddress,
-      amount,
-      validUntil,
-      validAfter,
-    } satisfies IGetERC3009SignatureParams);
+    >(
+      "getERC3009Signature",
+      {
+        destinationAddress,
+        amount,
+        validUntil,
+        validAfter,
+      } satisfies IGetERC3009SignatureParams,
+      true, // requireInteraction: display iframe for user interaction
+    );
   }
 
   public getPermitSignature(
@@ -282,15 +254,16 @@ export class WalletProxy {
   protected rpcCall<TReturn, TParams>(
     eventName: string,
     params: TParams,
+    requireInteraction: boolean = false,
   ): ResultAsync<TReturn, ProxyError> {
     if (this.child == null) {
       return errAsync(new ProxyError(new Error("WalletProxy not initialized")));
     }
 
-    // Preserve user activation for WebAuthn in iframe
-    // This is critical: WebAuthn requires user activation, and mobile browsers
-    // are strict about preserving it through postMessage
-    const { restore } = this.prepareIframeForWebAuthn();
+    // Prepare iframe based on whether interaction is required
+    const { restore } = requireInteraction
+      ? this.prepareIframeForDisplay()
+      : this.prepareIframeForWebAuthn();
 
     // Setup a callback
     return ResultAsync.fromPromise(
@@ -313,7 +286,7 @@ export class WalletProxy {
           }
         });
 
-        // Call the signIn function in the child
+        // Call the function in the child
         this.child!.call(
           eventName,
           ObjectUtils.serialize({
@@ -326,12 +299,17 @@ export class WalletProxy {
       (e) => {
         return ProxyError.fromError(e as BaseError);
       },
-    ).map((result) => {
-      // Restore iframe state after a delay (allows WebAuthn prompt to appear)
-      restore();
-
-      return result;
-    });
+    )
+      .map((result) => {
+        // Restore iframe state after completion
+        restore();
+        return result;
+      })
+      .mapErr((error) => {
+        // Restore iframe state even on error
+        restore();
+        return error;
+      });
   }
 
   /**
@@ -437,29 +415,4 @@ export class WalletProxy {
     };
   }
 
-  public displayPrivateKey(onClose: () => void): ResultAsync<void, ProxyError> {
-    if (this.child == null) {
-      return errAsync(new ProxyError(new Error("WalletProxy not initialized")));
-    }
-
-    // Prepare iframe to be visible
-    const { restore } = this.prepareIframeForDisplay();
-
-    // Setup an event listener for the private key display closed event
-    // Use a one-time listener pattern since Postmate doesn't have .off()
-    let hasClosed = false;
-    const handleClose = () => {
-      if (hasClosed) return;
-      hasClosed = true;
-      restore();
-      onClose();
-    };
-
-    this.child!.on("PrivateKeyDisplayClosed", handleClose);
-
-    // Call displayPrivateKey in the iframe
-    this.child.call("displayPrivateKey");
-
-    return okAsync(undefined);
-  }
 }
