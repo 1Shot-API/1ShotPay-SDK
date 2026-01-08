@@ -33,6 +33,7 @@ export class WalletProxy {
     number,
     (result: IRPCWrapperReturn) => void
   >();
+  protected containerElement: HTMLElement | null = null;
 
   public constructor() {}
 
@@ -44,72 +45,6 @@ export class WalletProxy {
   }
 
   /**
-   * Prepare iframe for WebAuthn operation to preserve user activation
-   * This makes the iframe visible and focused so WebAuthn can work properly
-   */
-  private prepareIframeForWebAuthn(): {
-    restore: () => void;
-  } {
-    if (
-      !this.child?.frame ||
-      !(this.child.frame instanceof HTMLIFrameElement)
-    ) {
-      return { restore: () => {} };
-    }
-
-    const frame = this.child.frame;
-    const originalClasses = frame.className;
-    const originalStyle = {
-      display: frame.style.display,
-      width: frame.style.width,
-      height: frame.style.height,
-      position: frame.style.position,
-      opacity: frame.style.opacity,
-      pointerEvents: frame.style.pointerEvents,
-      zIndex: frame.style.zIndex,
-    };
-
-    // Remove 'hidden' class and make iframe technically "visible"
-    frame.classList.remove("hidden");
-    frame.style.display = "block";
-    frame.style.width = "1px";
-    frame.style.height = "1px";
-    frame.style.position = "fixed";
-    frame.style.top = "0";
-    frame.style.left = "0";
-    frame.style.opacity = "0";
-    frame.style.pointerEvents = "none";
-    frame.style.zIndex = "-1";
-
-    // Focus the iframe to preserve user activation
-    try {
-      if (frame.contentWindow) {
-        frame.contentWindow.focus();
-      }
-      frame.focus();
-    } catch (e) {
-      console.warn("Could not focus iframe:", e);
-    }
-
-    // Return restore function
-    return {
-      restore: () => {
-        if (this.child?.frame instanceof HTMLIFrameElement) {
-          const f = this.child.frame;
-          f.className = originalClasses;
-          f.style.display = originalStyle.display;
-          f.style.width = originalStyle.width;
-          f.style.height = originalStyle.height;
-          f.style.position = originalStyle.position;
-          f.style.opacity = originalStyle.opacity;
-          f.style.pointerEvents = originalStyle.pointerEvents;
-          f.style.zIndex = originalStyle.zIndex;
-        }
-      },
-    };
-  }
-
-  /**
    *
    * @param elementId ID of Element to inject frame into
    * @param locale Locale code (e.g., 'en', 'es', 'tr') for the wallet iframe URL
@@ -118,7 +53,6 @@ export class WalletProxy {
    */
   public initialize(
     elementId: string,
-
     classListArray: string[] = [],
     locale: ELocale = ELocale.English,
   ): ResultAsync<void, ProxyError> {
@@ -135,6 +69,11 @@ export class WalletProxy {
       return ProxyError.fromError(e as Error);
     }).map((child) => {
       this.child = child;
+      // Store reference to container element for modal styling
+      const container = document.getElementById(elementId);
+      if (container) {
+        this.containerElement = container;
+      }
 
       // Setup the callback event listener
       this.child.on(rpcCallbackEventName, (data: JSONString) => {
@@ -312,25 +251,94 @@ export class WalletProxy {
       });
   }
 
+    /**
+   * Prepare iframe for WebAuthn operation to preserve user activation
+   * This makes the iframe visible and focused so WebAuthn can work properly
+   */
+    private prepareIframeForWebAuthn(): {
+      restore: () => void;
+    } {
+      if (
+        !this.child?.frame ||
+        !(this.child.frame instanceof HTMLIFrameElement)
+      ) {
+        return { restore: () => {} };
+      }
+  
+      const frame = this.child.frame;
+      const originalClasses = frame.className;
+      const originalStyle = {
+        display: frame.style.display,
+        width: frame.style.width,
+        height: frame.style.height,
+        position: frame.style.position,
+        opacity: frame.style.opacity,
+        pointerEvents: frame.style.pointerEvents,
+        zIndex: frame.style.zIndex,
+      };
+  
+      // Remove 'hidden' class and make iframe technically "visible"
+      frame.classList.remove("hidden");
+      frame.style.display = "block";
+      frame.style.width = "1px";
+      frame.style.height = "1px";
+      frame.style.position = "fixed";
+      frame.style.top = "0";
+      frame.style.left = "0";
+      frame.style.opacity = "0";
+      frame.style.pointerEvents = "none";
+      frame.style.zIndex = "-1";
+  
+      // Focus the iframe to preserve user activation
+      try {
+        if (frame.contentWindow) {
+          frame.contentWindow.focus();
+        }
+        frame.focus();
+      } catch (e) {
+        console.warn("Could not focus iframe:", e);
+      }
+  
+      // Return restore function
+      return {
+        restore: () => {
+          if (this.child?.frame instanceof HTMLIFrameElement) {
+            const f = this.child.frame;
+            f.className = originalClasses;
+            f.style.display = originalStyle.display;
+            f.style.width = originalStyle.width;
+            f.style.height = originalStyle.height;
+            f.style.position = originalStyle.position;
+            f.style.opacity = originalStyle.opacity;
+            f.style.pointerEvents = originalStyle.pointerEvents;
+            f.style.zIndex = originalStyle.zIndex;
+          }
+        },
+      };
+    }
+
   /**
-   * Prepare iframe for private key display
-   * Makes the iframe visible as a full-screen overlay
+   * Prepare iframe for display as a modal dialog
+   * Creates a backdrop and centers the iframe as a modal
    */
   private prepareIframeForDisplay(): {
     restore: () => void;
   } {
     if (
       !this.child?.frame ||
-      !(this.child.frame instanceof HTMLIFrameElement)
+      !(this.child.frame instanceof HTMLIFrameElement) ||
+      !this.containerElement
     ) {
       return { restore: () => {} };
     }
 
     const frame = this.child.frame;
-    const container = frame.parentElement;
-    const originalClasses = frame.className;
-    const originalContainerClasses = container?.className || "";
-    const originalStyle = {
+    const container = this.containerElement;
+
+    // Store original styles for restoration
+    const originalFrameClasses = frame.className;
+    const originalContainerClasses = container.className;
+    const originalFrameStyle = {
       display: frame.style.display,
       width: frame.style.width,
       height: frame.style.height,
@@ -342,45 +350,73 @@ export class WalletProxy {
       opacity: frame.style.opacity,
       pointerEvents: frame.style.pointerEvents,
       zIndex: frame.style.zIndex,
+      border: frame.style.border,
+      borderRadius: frame.style.borderRadius,
+      margin: frame.style.margin,
+      padding: frame.style.padding,
+      boxShadow: frame.style.boxShadow,
+      transform: frame.style.transform,
     };
-    const originalContainerStyle = container
-      ? {
-          display: container.style.display,
-          position: container.style.position,
-          zIndex: container.style.zIndex,
-        }
-      : null;
+    const originalContainerStyle = {
+      display: container.style.display,
+      position: container.style.position,
+      top: container.style.top,
+      left: container.style.left,
+      width: container.style.width,
+      height: container.style.height,
+      zIndex: container.style.zIndex,
+      backgroundColor: container.style.backgroundColor,
+      pointerEvents: container.style.pointerEvents,
+    };
 
-    // Make container visible and positioned correctly
-    // Need to override Tailwind's hidden class which uses !important
-    if (container) {
-      container.classList.remove("hidden");
-      // Use setProperty with important flag to override Tailwind's hidden class
-      container.style.setProperty("display", "block", "important");
-      container.style.setProperty("position", "fixed", "important");
-      container.style.setProperty("top", "0", "important");
-      container.style.setProperty("left", "0", "important");
-      container.style.setProperty("width", "100vw", "important");
-      container.style.setProperty("height", "100vh", "important");
-      container.style.setProperty("z-index", "9999", "important");
-      container.style.setProperty("pointer-events", "none", "important");
+    // Check if backdrop already exists
+    let backdrop = container.querySelector(
+      ".wallet-modal-backdrop",
+    ) as HTMLElement;
+    const backdropCreated = !backdrop;
+
+    // Create backdrop if it doesn't exist
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.className = "wallet-modal-backdrop";
+      container.insertBefore(backdrop, frame);
     }
 
-    // Make iframe visible as full-screen overlay
-    // Use setProperty with important flag to override Tailwind's hidden class
+    // Style container as modal backdrop
+    container.classList.remove("hidden");
+    container.style.setProperty("display", "flex", "important");
+    container.style.setProperty("position", "fixed", "important");
+    container.style.setProperty("top", "0", "important");
+    container.style.setProperty("left", "0", "important");
+    container.style.setProperty("width", "100vw", "important");
+    container.style.setProperty("height", "100vh", "important");
+    container.style.setProperty("z-index", "9999", "important");
+    container.style.setProperty("align-items", "center", "important");
+    container.style.setProperty("justify-content", "center", "important");
+
+    // Style backdrop
+    backdrop.style.setProperty("position", "absolute", "important");
+    backdrop.style.setProperty("top", "0", "important");
+    backdrop.style.setProperty("left", "0", "important");
+    backdrop.style.setProperty("width", "100%", "important");
+    backdrop.style.setProperty("height", "100%", "important");
+    backdrop.style.setProperty("background-color", "rgba(0, 0, 0, 0.5)", "important");
+    backdrop.style.setProperty("z-index", "1", "important");
+
+    // Style iframe as centered modal dialog
     frame.classList.remove("hidden");
     frame.style.setProperty("display", "block", "important");
-    frame.style.setProperty("width", "100vw", "important");
-    frame.style.setProperty("height", "100vh", "important");
-    frame.style.setProperty("position", "fixed", "important");
-    frame.style.setProperty("top", "0", "important");
-    frame.style.setProperty("left", "0", "important");
-    frame.style.setProperty("right", "0", "important");
-    frame.style.setProperty("bottom", "0", "important");
+    frame.style.setProperty("width", "90vw", "important");
+    frame.style.setProperty("max-width", "600px", "important");
+    frame.style.setProperty("height", "80vh", "important");
+    frame.style.setProperty("max-height", "800px", "important");
+    frame.style.setProperty("position", "relative", "important");
+    frame.style.setProperty("z-index", "2", "important");
     frame.style.setProperty("opacity", "1", "important");
     frame.style.setProperty("pointer-events", "auto", "important");
-    frame.style.setProperty("z-index", "9999", "important");
     frame.style.setProperty("border", "none", "important");
+    frame.style.setProperty("border-radius", "8px", "important");
+    frame.style.setProperty("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)", "important");
     frame.style.setProperty("margin", "0", "important");
     frame.style.setProperty("padding", "0", "important");
 
@@ -389,27 +425,51 @@ export class WalletProxy {
       restore: () => {
         if (this.child?.frame instanceof HTMLIFrameElement) {
           const f = this.child.frame;
-          f.className = originalClasses;
-          f.style.display = originalStyle.display;
-          f.style.width = originalStyle.width;
-          f.style.height = originalStyle.height;
-          f.style.position = originalStyle.position;
-          f.style.top = originalStyle.top;
-          f.style.left = originalStyle.left;
-          f.style.right = originalStyle.right;
-          f.style.bottom = originalStyle.bottom;
-          f.style.opacity = originalStyle.opacity;
-          f.style.pointerEvents = originalStyle.pointerEvents;
-          f.style.zIndex = originalStyle.zIndex;
-          f.style.border = "";
-          f.style.margin = "";
-          f.style.padding = "";
+          f.className = originalFrameClasses;
+          f.style.display = originalFrameStyle.display;
+          f.style.width = originalFrameStyle.width;
+          f.style.height = originalFrameStyle.height;
+          f.style.position = originalFrameStyle.position;
+          f.style.top = originalFrameStyle.top;
+          f.style.left = originalFrameStyle.left;
+          f.style.right = originalFrameStyle.right;
+          f.style.bottom = originalFrameStyle.bottom;
+          f.style.opacity = originalFrameStyle.opacity;
+          f.style.pointerEvents = originalFrameStyle.pointerEvents;
+          f.style.zIndex = originalFrameStyle.zIndex;
+          f.style.border = originalFrameStyle.border;
+          f.style.borderRadius = originalFrameStyle.borderRadius;
+          f.style.margin = originalFrameStyle.margin;
+          f.style.padding = originalFrameStyle.padding;
+          f.style.boxShadow = originalFrameStyle.boxShadow;
+          f.style.transform = originalFrameStyle.transform;
         }
-        if (container && originalContainerStyle) {
+        if (container) {
           container.className = originalContainerClasses;
           container.style.display = originalContainerStyle.display;
           container.style.position = originalContainerStyle.position;
+          container.style.top = originalContainerStyle.top;
+          container.style.left = originalContainerStyle.left;
+          container.style.width = originalContainerStyle.width;
+          container.style.height = originalContainerStyle.height;
           container.style.zIndex = originalContainerStyle.zIndex;
+          container.style.backgroundColor = originalContainerStyle.backgroundColor;
+          container.style.pointerEvents = originalContainerStyle.pointerEvents;
+          container.style.removeProperty("align-items");
+          container.style.removeProperty("justify-content");
+        }
+        // Remove backdrop if we created it
+        if (backdropCreated && backdrop && backdrop.parentNode) {
+          backdrop.parentNode.removeChild(backdrop);
+        } else if (backdrop) {
+          // Reset backdrop styles if it existed
+          backdrop.style.removeProperty("position");
+          backdrop.style.removeProperty("top");
+          backdrop.style.removeProperty("left");
+          backdrop.style.removeProperty("width");
+          backdrop.style.removeProperty("height");
+          backdrop.style.removeProperty("background-color");
+          backdrop.style.removeProperty("z-index");
         }
       },
     };
