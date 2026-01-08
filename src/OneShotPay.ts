@@ -26,7 +26,7 @@ import {
 } from "types/primitives";
 import { ELocale } from "types/enum";
 
-export class WalletProxy {
+export class OneShotPay {
   protected child: Postmate.ParentAPI | null = null;
   protected rpcNonce = 0;
   protected rpcCallbacks = new Map<

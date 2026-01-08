@@ -1,35 +1,110 @@
-import { WalletProxy } from "WalletProxy";
+import { OneShotPay } from "OneShotPay";
 import { ELocale } from "types/enum";
-import { BigNumberString, EVMAccountAddress, UnixTimestamp } from "types/primitives";
+import {
+  BigNumberString,
+  EVMAccountAddress,
+  UnixTimestamp,
+} from "types/primitives";
 
-const statusDiv = document.getElementById("status");
-if (!statusDiv) {
-  throw new Error("Status div not found");
+const statusTextarea = document.getElementById(
+  "statusTextarea",
+) as HTMLTextAreaElement;
+const initIndicator = document.getElementById("initIndicator");
+const statusIndicator = document.getElementById("statusIndicator");
+const getSignatureBtn = document.getElementById(
+  "getSignatureBtn",
+) as HTMLButtonElement;
+
+if (!statusTextarea || !initIndicator || !statusIndicator || !getSignatureBtn) {
+  throw new Error("Required elements not found");
 }
 
-function updateStatus(message: string, isError = false) {
-  statusDiv.textContent = message;
-  statusDiv.className = isError ? "error" : "success";
+function addStatusMessage(message: string, isError = false) {
+  const timestamp = new Date().toLocaleTimeString();
+  const prefix = isError ? "[ERROR]" : "[INFO]";
+  const colorClass = isError ? "error" : "success";
+  const logMessage = `${timestamp} ${prefix} ${message}\n`;
+  
+  statusTextarea.value += logMessage;
+  statusTextarea.scrollTop = statusTextarea.scrollHeight;
+  
   console.log(message);
 }
 
+function setIndicatorState(
+  indicator: HTMLElement,
+  state: "idle" | "active" | "complete" | "error",
+) {
+  indicator.className = "indicator-dot";
+  if (state === "active") {
+    indicator.classList.add("active");
+  } else if (state === "complete") {
+    indicator.classList.add("complete");
+  } else if (state === "error") {
+    indicator.classList.add("error");
+  }
+}
+
 // Create wallet proxy instance
-const walletProxy = new WalletProxy();
+const oneShotPay = new OneShotPay();
+
+// Set initial indicator state
+setIndicatorState(initIndicator, "active");
+addStatusMessage("Starting wallet initialization...");
 
 // Initialize and get status
-walletProxy
+oneShotPay
   .initialize("Wallet", [], ELocale.English)
+  .map(() => {
+    setIndicatorState(initIndicator, "complete");
+    addStatusMessage("Wallet initialized successfully");
+    
+    // Start getStatus indicator
+    setIndicatorState(statusIndicator, "active");
+    addStatusMessage("Calling getStatus()...");
+  })
   .andThen(() => {
-    return walletProxy.getStatus();
+    return oneShotPay.getStatus();
   })
   .map((status) => {
-    updateStatus(`Success! Status: ${JSON.stringify(status, null, 2)}`);
-  })
-  .andThen(() => {
-    return walletProxy.getERC3009Signature(EVMAccountAddress("0x0000000000000000000000000000000000000000"), BigNumberString("1"), UnixTimestamp(1715222400), UnixTimestamp(1715222400));
+    setIndicatorState(statusIndicator, "complete");
+    addStatusMessage(
+      `getStatus() successful: ${JSON.stringify(status, null, 2)}`,
+    );
+    
+    // Enable the button now that initialization is complete
+    getSignatureBtn.disabled = false;
+    addStatusMessage("Ready! Click the button to get ERC3009 signature.");
   })
   .mapErr((error) => {
-    updateStatus(`Error: ${error.message}`, true);
+    setIndicatorState(initIndicator, "error");
+    setIndicatorState(statusIndicator, "error");
+    addStatusMessage(`Error: ${error.message}`, true);
     console.error("Wallet error:", error);
   });
+
+// Button click handler for getting signature
+getSignatureBtn.addEventListener("click", () => {
+  getSignatureBtn.disabled = true;
+  addStatusMessage("Requesting ERC3009 signature...");
+  
+  oneShotPay
+    .getERC3009Signature(
+      EVMAccountAddress("0x0000000000000000000000000000000000000000"),
+      BigNumberString("1"),
+      UnixTimestamp(1715222400),
+      UnixTimestamp(1715222400),
+    )
+    .map((result) => {
+      addStatusMessage(
+        `ERC3009 signature received: ${JSON.stringify(result, null, 2)}`,
+      );
+      getSignatureBtn.disabled = false;
+    })
+    .mapErr((error) => {
+      addStatusMessage(`Error getting signature: ${error.message}`, true);
+      console.error("Signature error:", error);
+      getSignatureBtn.disabled = false;
+    });
+});
 
