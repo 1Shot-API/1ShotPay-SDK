@@ -78,12 +78,21 @@ export class OneShotPay {
 
       // Add WebAuthn permissions to the iframe for passkey support
       // These permissions are required for navigator.credentials.get() and create() to work in iframes
-      // For cross-origin iframes, we need to use the format: feature-name=*
+      // Note: The allow attribute should already be set by Postmate when creating the iframe,
+      // but we set it again here as a fallback and to ensure it's present after handshake
       if (child.frame && child.frame instanceof HTMLIFrameElement) {
-        child.frame.setAttribute(
-          "allow",
-          "publickey-credentials-get; publickey-credentials-create",
-        );
+        const allowValue = "publickey-credentials-get; publickey-credentials-create";
+        // child.frame.setAttribute("allow", allowValue);
+        
+        // Verify the attribute was set correctly
+        const actualAllow = child.frame.getAttribute("allow");
+        if (actualAllow !== allowValue) {
+          console.warn(
+            `WebAuthn allow attribute mismatch. Expected: "${allowValue}", Got: "${actualAllow}"`
+          );
+        } else {
+          console.log("WebAuthn permissions verified on iframe:", actualAllow);
+        }
       }
       else {
         console.warn("Could not add WebAuthn permissions to iframe. Frame is not an HTMLIFrameElement.");

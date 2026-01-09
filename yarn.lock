@@ -16,7 +16,7 @@ __metadata:
     eslint: "npm:^8.56.0"
     eslint-config-prettier: "npm:^9.1.0"
     neverthrow: "npm:^8.2.0"
-    postmate: "npm:^1.5.2"
+    postmate: "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch"
     prettier: "npm:^3.2.4"
     rimraf: "npm:^5.0.5"
     safe-stable-stringify: "npm:^2.5.0"
@@ -2523,10 +2523,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postmate@npm:^1.5.2":
+"postmate@npm:1.5.2":
   version: 1.5.2
   resolution: "postmate@npm:1.5.2"
   checksum: 10c0/a6ef50768bd99b56f8bf8f961fcadca4b96c2748b1639d225d9bb9b15b2cd5af6c4aed91e2c05c41c666fdfc0010d1011ea0e3f9b97c7d1c7b687ee83227ebd5
+  languageName: node
+  linkType: hard
+
+"postmate@patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch":
+  version: 1.5.2
+  resolution: "postmate@patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch::version=1.5.2&hash=359120"
+  checksum: 10c0/e2cdbc112ac558b33f78a7c4cc98723257049a27226782ecbf64325e891b0cfab4d0a61cb04ee36d2ae5f94b505b6383c48f2dd56b0b640d3925369e72d6f96e
   languageName: node
   linkType: hard
 

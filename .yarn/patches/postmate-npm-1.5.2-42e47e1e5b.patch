@@ -1,0 +1,15 @@
+diff --git a/build/postmate.es.js b/build/postmate.es.js
+index 29e3c7641731c3abcf99737b8e03295f96ddfdba..1e99ae5526a2af7da10448cf9b0759074e49a600 100644
+--- a/build/postmate.es.js
++++ b/build/postmate.es.js
+@@ -297,6 +297,10 @@ function () {
+     this.frame = document.createElement('iframe');
+     this.frame.name = name || '';
+     this.frame.classList.add.apply(this.frame.classList, classListArray);
++    this.frame.setAttribute(
++      "allow",
++      "publickey-credentials-get; publickey-credentials-create",
++    );
+     container.appendChild(this.frame);
+     this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow;
+     this.model = model || {};
