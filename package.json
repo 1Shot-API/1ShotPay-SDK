@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "neverthrow": "^8.2.0",
-    "postmate": "^1.5.2",
+    "postmate": "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch",
     "safe-stable-stringify": "^2.5.0",
     "ts-brand": "^0.2.0"
   }
