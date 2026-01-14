@@ -134,6 +134,18 @@ export class OneShotPay {
         this.hide();
       });
 
+      // Setup listener for registrationRequired event from the iframe
+      this.child.on("registrationRequired", (url: string) => {
+        console.debug("Received registrationRequired event from Wallet iframe:", url);
+        // Close the frame when registration is required
+        this.hide();
+        if (url && typeof url === "string") {
+          window.open(url, "_blank", "noopener,noreferrer");
+        } else {
+          console.warn("registrationRequired event received with invalid URL:", url);
+        }
+      });
+
       //   // Fetch the height property in child.html and set it to the iFrames height
       //   child
       //     .get("height")
@@ -235,8 +247,53 @@ export class OneShotPay {
    */
   public hide(): void {
     if (this.displayRestore) {
+      // If we have a restore function from show(), use it
       this.displayRestore();
       this.displayRestore = null;
+    } else if (this.containerElement && this.isVisible) {
+      // If the iframe was shown via RPC call (no displayRestore), hide it directly
+      // by resetting the container and iframe styles
+      const container = this.containerElement;
+      const frame = this.child?.frame;
+      
+      // Hide container
+      container.style.setProperty("display", "none", "important");
+      container.classList.add("hidden");
+      
+      // Remove backdrop if it exists
+      const backdrop = container.querySelector(".wallet-modal-backdrop");
+      if (backdrop && backdrop.parentNode) {
+        backdrop.parentNode.removeChild(backdrop);
+      }
+      
+      // Reset container styles
+      container.style.removeProperty("position");
+      container.style.removeProperty("top");
+      container.style.removeProperty("left");
+      container.style.removeProperty("width");
+      container.style.removeProperty("height");
+      container.style.removeProperty("z-index");
+      container.style.removeProperty("align-items");
+      container.style.removeProperty("justify-content");
+      
+      // Reset iframe styles if it exists
+      if (frame && frame instanceof HTMLIFrameElement) {
+        frame.style.removeProperty("display");
+        frame.style.removeProperty("width");
+        frame.style.removeProperty("max-width");
+        frame.style.removeProperty("height");
+        frame.style.removeProperty("max-height");
+        frame.style.removeProperty("position");
+        frame.style.removeProperty("z-index");
+        frame.style.removeProperty("opacity");
+        frame.style.removeProperty("pointer-events");
+        frame.style.removeProperty("border");
+        frame.style.removeProperty("border-radius");
+        frame.style.removeProperty("box-shadow");
+        frame.style.removeProperty("margin");
+        frame.style.removeProperty("padding");
+        frame.classList.add("hidden");
+      }
     }
     this.isVisible = false;
   }
@@ -262,6 +319,11 @@ export class OneShotPay {
     const { restore } = requireInteraction
       ? this.prepareIframeForDisplay()
       : this.prepareIframeForWebAuthn();
+    
+    // Track visibility when iframe is shown for interaction
+    if (requireInteraction) {
+      this.isVisible = true;
+    }
 
     // Setup a callback
     return ResultAsync.fromPromise(
@@ -301,11 +363,17 @@ export class OneShotPay {
       .map((result) => {
         // Restore iframe state after completion
         restore();
+        if (requireInteraction) {
+          this.isVisible = false;
+        }
         return result;
       })
       .mapErr((error) => {
         // Restore iframe state even on error
         restore();
+        if (requireInteraction) {
+          this.isVisible = false;
+        }
         return error;
       });
   }
