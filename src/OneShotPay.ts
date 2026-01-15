@@ -61,7 +61,7 @@ export class OneShotPay {
     // Kick off the handshake with the iFrame
     const handshake = new Postmate({
       container: document.getElementById(elementId), // Element to inject frame into
-      url: `https://immune-sheep-light.ngrok-free.app/${locale}/wallet`, // Page to load - Next.js route that renders the wallet iframe page with locale
+      url: `https://1shotpay.com/${locale}/wallet`, // Page to load - Next.js route that renders the wallet iframe page with locale
       name: "wallet-iframe", // Set Iframe name attribute. Useful to get `window.name` in the child.
       classListArray: classListArray, //Classes to add to the iframe via classList, useful for styling.
     });

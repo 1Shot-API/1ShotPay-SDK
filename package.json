@@ -45,6 +45,7 @@
   },
   "packageManager": "yarn@4.1.1",
   "devDependencies": {
+    "@types/node": "^25.0.8",
     "@types/postmate": "^1",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",

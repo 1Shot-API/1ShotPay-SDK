@@ -1,10 +1,10 @@
-import { OneShotPay } from "OneShotPay";
-import { ELocale } from "types/enum";
 import {
   BigNumberString,
+  ELocale,
   EVMAccountAddress,
+  OneShotPay,
   UnixTimestamp,
-} from "types/primitives";
+} from "@1shotapi/wallet";
 
 const statusTextarea = document.getElementById(
   "statusTextarea",
