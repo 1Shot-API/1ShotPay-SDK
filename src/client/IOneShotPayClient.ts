@@ -36,9 +36,7 @@ export interface IOneShotPayClient {
   /** getStatus returns whether or not the user has a valid session, and returns the user info. */
   getStatus(): ResultAsync<IAuthenticationResult, ProxyError>;
 
-  signIn(
-    username: Username,
-  ): ResultAsync<IAuthenticationResult, ProxyError>;
+  signIn(username: Username): ResultAsync<IAuthenticationResult, ProxyError>;
 
   getERC3009Signature(
     recipient: string,

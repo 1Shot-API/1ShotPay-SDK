@@ -2,11 +2,11 @@
 
 This repository is a Yarn workspace containing the 1ShotPay client SDK, server SDK, and shared common package.
 
-| Package | Description |
-|--------|-------------|
-| **@1shotapi/1shotpay-common** | Shared types and utilities used by both client and server SDKs |
+| Package                           | Description                                                        |
+| --------------------------------- | ------------------------------------------------------------------ |
+| **@1shotapi/1shotpay-common**     | Shared types and utilities used by both client and server SDKs     |
 | **@1shotapi/1shotpay-client-sdk** | Browser SDK for embedding the 1ShotPay passkey wallet in your site |
-| **@1shotapi/1shotpay-server-sdk** | Server-side SDK for 1ShotPay API integration |
+| **@1shotapi/1shotpay-server-sdk** | Server-side SDK for 1ShotPay API integration                       |
 
 - **Live demo (Client SDK)**: `https://1shot-api.github.io/1shotpay-sdk/`
 
@@ -50,25 +50,30 @@ const result = await wallet
     UnixTimestamp(1715222400),
     UnixTimestamp(1715222400),
   )
-  .match((ok) => ok, (err) => { throw err; });
+  .match(
+    (ok) => ok,
+    (err) => {
+      throw err;
+    },
+  );
 ```
 
 ## Scripts (from repo root)
 
-| Script | Description |
-|--------|-------------|
-| `yarn build` | Build all workspace packages (common → client, server) |
-| `yarn build:common` | Build only `@1shotapi/1shotpay-common` |
-| `yarn build:client` | Build only `@1shotapi/1shotpay-client-sdk` |
-| `yarn build:server` | Build only `@1shotapi/1shotpay-server-sdk` |
-| `yarn dev` | Run the Client SDK test app (Vite dev server) |
-| `yarn build:test` | Build the test app (output in `docs/`) |
-| `yarn build:test:gh-pages` | Build the test app with GitHub Pages base path |
-| `yarn typecheck` | Type-check all workspace packages |
-| `yarn clean` | Remove all build outputs |
-| `yarn publish:common` | Build and publish `@1shotapi/1shotpay-common` to npm |
-| `yarn publish:client` | Build and publish `@1shotapi/1shotpay-client-sdk` to npm |
-| `yarn publish:server` | Build and publish `@1shotapi/1shotpay-server-sdk` to npm |
+| Script                     | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| `yarn build`               | Build all workspace packages (common → client, server)   |
+| `yarn build:common`        | Build only `@1shotapi/1shotpay-common`                   |
+| `yarn build:client`        | Build only `@1shotapi/1shotpay-client-sdk`               |
+| `yarn build:server`        | Build only `@1shotapi/1shotpay-server-sdk`               |
+| `yarn dev`                 | Run the Client SDK test app (Vite dev server)            |
+| `yarn build:test`          | Build the test app (output in `docs/`)                   |
+| `yarn build:test:gh-pages` | Build the test app with GitHub Pages base path           |
+| `yarn typecheck`           | Type-check all workspace packages                        |
+| `yarn clean`               | Remove all build outputs                                 |
+| `yarn publish:common`      | Build and publish `@1shotapi/1shotpay-common` to npm     |
+| `yarn publish:client`      | Build and publish `@1shotapi/1shotpay-client-sdk` to npm |
+| `yarn publish:server`      | Build and publish `@1shotapi/1shotpay-server-sdk` to npm |
 
 Publish order: publish `common` first, then `client` and/or `server` as needed.
 

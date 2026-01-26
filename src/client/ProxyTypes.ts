@@ -33,7 +33,6 @@ export interface ISignInParams {
   username: Username;
 }
 
-
 export interface IGetERC3009SignatureParams {
   recipient: string;
   destinationAddress: EVMAccountAddress;

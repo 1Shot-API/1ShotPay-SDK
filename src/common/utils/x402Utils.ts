@@ -119,7 +119,8 @@ export function x402NormalizeAcceptedPayments(
     else candidates.push(req.accepted);
   }
   if (req.paymentRequirements != null) {
-    if (Array.isArray(req.paymentRequirements)) candidates.push(...req.paymentRequirements);
+    if (Array.isArray(req.paymentRequirements))
+      candidates.push(...req.paymentRequirements);
   }
   // Best-effort coercion
   return candidates.filter(Boolean).map((c) => c as X402AcceptedPayment);
@@ -133,10 +134,13 @@ export function x402GetChainIdFromNetwork(network: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function x402IsUsdcOnBase(chainId: number, asset: EVMContractAddress): boolean {
+export function x402IsUsdcOnBase(
+  chainId: number,
+  asset: EVMContractAddress,
+): boolean {
   const a = asset.toLowerCase();
   // Base mainnet USDC
-  if (chainId === 8453 && a === "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913") return true;
+  if (chainId === 8453 && a === "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913")
+    return true;
   return false;
 }
-

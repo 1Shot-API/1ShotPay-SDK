@@ -25,19 +25,28 @@ const wallet = new OneShotPayClient();
 
 await wallet.initialize("Wallet", [], ELocale.English).match(
   () => undefined,
-  (err) => { throw err; },
+  (err) => {
+    throw err;
+  },
 );
 
 wallet.show();
 wallet.hide();
 
-const result = await wallet.getERC3009Signature(
-  "Some recipient",
-  EVMAccountAddress("0x..."),
-  BigNumberString("1"),
-  UnixTimestamp(1715222400),
-  UnixTimestamp(1715222400),
-).match((ok) => ok, (err) => { throw err; });
+const result = await wallet
+  .getERC3009Signature(
+    "Some recipient",
+    EVMAccountAddress("0x..."),
+    BigNumberString("1"),
+    UnixTimestamp(1715222400),
+    UnixTimestamp(1715222400),
+  )
+  .match(
+    (ok) => ok,
+    (err) => {
+      throw err;
+    },
+  );
 ```
 
 ## API overview

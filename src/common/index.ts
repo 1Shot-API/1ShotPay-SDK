@@ -9,5 +9,7 @@ export * from "./types/primitives";
 export * from "./types/domain";
 export * from "./types/errors";
 export * from "./types/models";
+export * from "./utils/ITimeUtils";
 export * from "./utils/ObjectUtils";
+export * from "./utils/TimeUtils";
 export * from "./utils/x402Utils";

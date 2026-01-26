@@ -17,6 +17,6 @@
     "isolatedModules": true,
     "types": []
   },
-  "include": ["*.ts"],
+  "include": ["*.ts", "../common/utils/TimeUtils.ts", "../common/utils/ITimeUtils.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -92,21 +92,23 @@ export class OneShotPayClient implements IOneShotPayClient {
       // Note: The allow attribute should already be set by Postmate when creating the iframe,
       // but we set it again here as a fallback and to ensure it's present after handshake
       if (child.frame && child.frame instanceof HTMLIFrameElement) {
-        const allowValue = "publickey-credentials-get; publickey-credentials-create";
+        const allowValue =
+          "publickey-credentials-get; publickey-credentials-create";
         // child.frame.setAttribute("allow", allowValue);
-        
+
         // Verify the attribute was set correctly
         const actualAllow = child.frame.getAttribute("allow");
         if (actualAllow !== allowValue) {
           console.warn(
-            `WebAuthn allow attribute mismatch. Expected: "${allowValue}", Got: "${actualAllow}"`
+            `WebAuthn allow attribute mismatch. Expected: "${allowValue}", Got: "${actualAllow}"`,
           );
         } else {
           console.log("WebAuthn permissions verified on iframe:", actualAllow);
         }
-      }
-      else {
-        console.warn("Could not add WebAuthn permissions to iframe. Frame is not an HTMLIFrameElement.");
+      } else {
+        console.warn(
+          "Could not add WebAuthn permissions to iframe. Frame is not an HTMLIFrameElement.",
+        );
       }
 
       // Setup the callback event listener
@@ -145,13 +147,19 @@ export class OneShotPayClient implements IOneShotPayClient {
 
       // Setup listener for registrationRequired event from the iframe
       this.child.on("registrationRequired", (url: string) => {
-        console.debug("Received registrationRequired event from Wallet iframe:", url);
+        console.debug(
+          "Received registrationRequired event from Wallet iframe:",
+          url,
+        );
         // Close the frame when registration is required
         this.hide();
         if (url && typeof url === "string") {
           window.open(url, "_blank", "noopener,noreferrer");
         } else {
-          console.warn("registrationRequired event received with invalid URL:", url);
+          console.warn(
+            "registrationRequired event received with invalid URL:",
+            url,
+          );
         }
       });
 
@@ -268,17 +276,17 @@ export class OneShotPayClient implements IOneShotPayClient {
       // by resetting the container and iframe styles
       const container = this.containerElement;
       const frame = this.child?.frame;
-      
+
       // Hide container
       container.style.setProperty("display", "none", "important");
       container.classList.add("hidden");
-      
+
       // Remove backdrop if it exists
       const backdrop = container.querySelector(".wallet-modal-backdrop");
       if (backdrop && backdrop.parentNode) {
         backdrop.parentNode.removeChild(backdrop);
       }
-      
+
       // Reset container styles
       container.style.removeProperty("position");
       container.style.removeProperty("top");
@@ -288,7 +296,7 @@ export class OneShotPayClient implements IOneShotPayClient {
       container.style.removeProperty("z-index");
       container.style.removeProperty("align-items");
       container.style.removeProperty("justify-content");
-      
+
       // Reset iframe styles if it exists
       if (frame && frame instanceof HTMLIFrameElement) {
         frame.style.removeProperty("display");
@@ -332,7 +340,9 @@ export class OneShotPayClient implements IOneShotPayClient {
     input: RequestInfo | URL,
     init?: RequestInit,
   ): ResultAsync<Response, AjaxError | ProxyError> {
-    const doFetch = (headersOverride?: Headers): ResultAsync<Response, AjaxError> => {
+    const doFetch = (
+      headersOverride?: Headers,
+    ): ResultAsync<Response, AjaxError> => {
       const nextInit: RequestInit = { ...(init ?? {}) };
 
       const headers = new Headers(init?.headers ?? undefined);
@@ -341,162 +351,173 @@ export class OneShotPayClient implements IOneShotPayClient {
       }
       nextInit.headers = headers;
 
-      return ResultAsync.fromPromise(fetch(input, nextInit), (e) => AjaxError.fromError(e as Error));
+      return ResultAsync.fromPromise(fetch(input, nextInit), (e) =>
+        AjaxError.fromError(e as Error),
+      );
     };
 
-    return doFetch().andThen(
-      (initialResponse) => {
-        if (initialResponse.status !== 402) {
-          return okAsync(initialResponse);
-        }
+    return doFetch().andThen((initialResponse) => {
+      if (initialResponse.status !== 402) {
+        return okAsync(initialResponse);
+      }
 
-        const paymentRequiredHeader =
-          initialResponse.headers.get("payment-required") ??
-          initialResponse.headers.get("PAYMENT-REQUIRED");
+      const paymentRequiredHeader =
+        initialResponse.headers.get("payment-required") ??
+        initialResponse.headers.get("PAYMENT-REQUIRED");
 
-        if (!paymentRequiredHeader) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                "Received HTTP 402 but missing PAYMENT-REQUIRED header for x402.",
-              ),
+      if (!paymentRequiredHeader) {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              "Received HTTP 402 but missing PAYMENT-REQUIRED header for x402.",
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        let parsed: unknown;
-        try {
-          parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
-        } catch (e) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Failed to parse PAYMENT-REQUIRED header for x402: ${(e as Error).message}`,
-              ),
+      let parsed: unknown;
+      try {
+        parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
+      } catch (e) {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              `Failed to parse PAYMENT-REQUIRED header for x402: ${(e as Error).message}`,
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        const req = parsed as X402PaymentRequirements;
-        const accepted = x402NormalizeAcceptedPayments(req);
-        const exact = accepted.find((p) => (p.scheme ?? "").toLowerCase() === "exact");
+      const req = parsed as X402PaymentRequirements;
+      const accepted = x402NormalizeAcceptedPayments(req);
+      const exact = accepted.find(
+        (p) => (p.scheme ?? "").toLowerCase() === "exact",
+      );
 
-        if (!exact) {
-          return errAsync(
-            new AjaxError(
-              new Error("x402 endpoint does not offer the Exact scheme (required)."),
+      if (!exact) {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              "x402 endpoint does not offer the Exact scheme (required).",
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        const network = exact.network;
-        const amount = exact.amount;
-        const asset = exact.asset;
-        const payTo = exact.payTo;
+      const network = exact.network;
+      const amount = exact.amount;
+      const asset = exact.asset;
+      const payTo = exact.payTo;
 
-        if (!network || !amount || !asset || !payTo) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                "x402 PAYMENT-REQUIRED header missing one of: network, amount, asset, payTo.",
-              ),
+      if (!network || !amount || !asset || !payTo) {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              "x402 PAYMENT-REQUIRED header missing one of: network, amount, asset, payTo.",
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        const chainId = x402GetChainIdFromNetwork(network);
-        if (chainId == null) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Unsupported x402 network "${network}". Only eip155:<chainId> is supported.`,
-              ),
+      const chainId = x402GetChainIdFromNetwork(network);
+      if (chainId == null) {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              `Unsupported x402 network "${network}". Only eip155:<chainId> is supported.`,
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        if (!x402IsUsdcOnBase(chainId, asset)) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Unsupported x402 payment. Only USDC on Base is supported (got asset=${asset}, network=${network}).`,
-              ),
+      if (!x402IsUsdcOnBase(chainId, asset)) {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              `Unsupported x402 payment. Only USDC on Base is supported (got asset=${asset}, network=${network}).`,
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        // Enforce asset transfer method (Exact + EIP-3009)
-        const extra = (exact.extra ?? {}) as Record<string, unknown>;
-        const method =
-          (extra["assetTransferMethod"] as string | undefined) ??
-          ((extra as Record<string, unknown>)["asset_transfer_method"] as
-            | string
-            | undefined);
-        if (method && method.toLowerCase() !== "eip3009") {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Unsupported x402 assetTransferMethod "${method}". Only "eip3009" is supported.`,
-              ),
+      // Enforce asset transfer method (Exact + EIP-3009)
+      const extra = (exact.extra ?? {}) as Record<string, unknown>;
+      const method =
+        (extra["assetTransferMethod"] as string | undefined) ??
+        ((extra as Record<string, unknown>)["asset_transfer_method"] as
+          | string
+          | undefined);
+      if (method && method.toLowerCase() !== "eip3009") {
+        return errAsync(
+          new AjaxError(
+            new Error(
+              `Unsupported x402 assetTransferMethod "${method}". Only "eip3009" is supported.`,
             ),
-          );
-        }
+          ),
+        );
+      }
 
-        // Signature validity window
-        const maxTimeoutSeconds =
-          typeof exact.maxTimeoutSeconds === "number" ? exact.maxTimeoutSeconds : 60;
-        const nowSeconds = Math.floor(Date.now() / 1000);
-        const validAfter = UnixTimestamp(nowSeconds);
-        const validUntil = UnixTimestamp(nowSeconds + maxTimeoutSeconds);
+      // Signature validity window
+      const maxTimeoutSeconds =
+        typeof exact.maxTimeoutSeconds === "number"
+          ? exact.maxTimeoutSeconds
+          : 60;
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const validAfter = UnixTimestamp(nowSeconds);
+      const validUntil = UnixTimestamp(nowSeconds + maxTimeoutSeconds);
 
-        // Use request URL as "recipient" string for wallet UX
-        const requestUrl = x402ResolveRequestUrl(input);
+      // Use request URL as "recipient" string for wallet UX
+      const requestUrl = x402ResolveRequestUrl(input);
 
-        // Generate the ERC-3009 signature via the embedded wallet
-        return this.getERC3009Signature(
-          requestUrl,
-          payTo,
-          amount,
-          validUntil,
-          validAfter,
-        ).andThen((signed: ISignedERC3009TransferWithAuthorization) => {
-          const paymentPayload: X402PaymentPayloadV2ExactEvm = {
-            x402Version: typeof req.x402Version === "number" ? req.x402Version : 2,
-            resource: {
-              url: (req.resource?.url ?? requestUrl) as unknown as string,
-              ...(req.resource?.description ? { description: req.resource.description } : {}),
-              ...(req.resource?.mimeType ? { mimeType: req.resource.mimeType } : {}),
+      // Generate the ERC-3009 signature via the embedded wallet
+      return this.getERC3009Signature(
+        requestUrl,
+        payTo,
+        amount,
+        validUntil,
+        validAfter,
+      ).andThen((signed: ISignedERC3009TransferWithAuthorization) => {
+        const paymentPayload: X402PaymentPayloadV2ExactEvm = {
+          x402Version:
+            typeof req.x402Version === "number" ? req.x402Version : 2,
+          resource: {
+            url: (req.resource?.url ?? requestUrl) as unknown as string,
+            ...(req.resource?.description
+              ? { description: req.resource.description }
+              : {}),
+            ...(req.resource?.mimeType
+              ? { mimeType: req.resource.mimeType }
+              : {}),
+          },
+          accepted: {
+            scheme: "exact",
+            network,
+            amount,
+            asset,
+            payTo,
+            maxTimeoutSeconds,
+            ...(Object.keys(extra).length ? { extra } : {}),
+          },
+          payload: {
+            signature: signed.signature,
+            authorization: {
+              from: signed.from,
+              to: signed.to,
+              value: signed.value,
+              validAfter: signed.validAfter,
+              validBefore: signed.validBefore,
+              nonce: signed.nonce,
             },
-            accepted: {
-              scheme: "exact",
-              network,
-              amount,
-              asset,
-              payTo,
-              maxTimeoutSeconds,
-              ...(Object.keys(extra).length ? { extra } : {}),
-            },
-            payload: {
-              signature: signed.signature,
-              authorization: {
-                from: signed.from,
-                to: signed.to,
-                value: signed.value,
-                validAfter: signed.validAfter,
-                validBefore: signed.validBefore,
-                nonce: signed.nonce,
-              },
-            },
-          };
+          },
+        };
 
-          const encoded = x402Base64EncodeUtf8(JSON.stringify(paymentPayload));
-          const headersOverride = new Headers();
-          headersOverride.set("PAYMENT-SIGNATURE", encoded);
+        const encoded = x402Base64EncodeUtf8(JSON.stringify(paymentPayload));
+        const headersOverride = new Headers();
+        headersOverride.set("PAYMENT-SIGNATURE", encoded);
 
-          return doFetch(headersOverride);
-        });
-      },
-    );
+        return doFetch(headersOverride);
+      });
+    });
   }
 
   protected rpcCall<TReturn, TParams>(
@@ -512,7 +533,7 @@ export class OneShotPayClient implements IOneShotPayClient {
     const { restore } = requireInteraction
       ? this.prepareIframeForDisplay()
       : this.prepareIframeForWebAuthn();
-    
+
     // Track visibility when iframe is shown for interaction
     if (requireInteraction) {
       this.isVisible = true;
@@ -571,71 +592,71 @@ export class OneShotPayClient implements IOneShotPayClient {
       });
   }
 
-    /**
+  /**
    * Prepare iframe for WebAuthn operation to preserve user activation
    * This makes the iframe visible and focused so WebAuthn can work properly
    */
-    private prepareIframeForWebAuthn(): {
-      restore: () => void;
-    } {
-      if (
-        !this.child?.frame ||
-        !(this.child.frame instanceof HTMLIFrameElement)
-      ) {
-        return { restore: () => {} };
-      }
-  
-      const frame = this.child.frame;
-      const originalClasses = frame.className;
-      const originalStyle = {
-        display: frame.style.display,
-        width: frame.style.width,
-        height: frame.style.height,
-        position: frame.style.position,
-        opacity: frame.style.opacity,
-        pointerEvents: frame.style.pointerEvents,
-        zIndex: frame.style.zIndex,
-      };
-  
-      // Remove 'hidden' class and make iframe technically "visible"
-      frame.classList.remove("hidden");
-      frame.style.display = "block";
-      frame.style.width = "1px";
-      frame.style.height = "1px";
-      frame.style.position = "fixed";
-      frame.style.top = "0";
-      frame.style.left = "0";
-      frame.style.opacity = "0";
-      frame.style.pointerEvents = "none";
-      frame.style.zIndex = "-1";
-  
-      // Focus the iframe to preserve user activation
-      try {
-        if (frame.contentWindow) {
-          frame.contentWindow.focus();
-        }
-        frame.focus();
-      } catch (e) {
-        console.warn("Could not focus iframe:", e);
-      }
-  
-      // Return restore function
-      return {
-        restore: () => {
-          if (this.child?.frame instanceof HTMLIFrameElement) {
-            const f = this.child.frame;
-            f.className = originalClasses;
-            f.style.display = originalStyle.display;
-            f.style.width = originalStyle.width;
-            f.style.height = originalStyle.height;
-            f.style.position = originalStyle.position;
-            f.style.opacity = originalStyle.opacity;
-            f.style.pointerEvents = originalStyle.pointerEvents;
-            f.style.zIndex = originalStyle.zIndex;
-          }
-        },
-      };
+  private prepareIframeForWebAuthn(): {
+    restore: () => void;
+  } {
+    if (
+      !this.child?.frame ||
+      !(this.child.frame instanceof HTMLIFrameElement)
+    ) {
+      return { restore: () => {} };
     }
+
+    const frame = this.child.frame;
+    const originalClasses = frame.className;
+    const originalStyle = {
+      display: frame.style.display,
+      width: frame.style.width,
+      height: frame.style.height,
+      position: frame.style.position,
+      opacity: frame.style.opacity,
+      pointerEvents: frame.style.pointerEvents,
+      zIndex: frame.style.zIndex,
+    };
+
+    // Remove 'hidden' class and make iframe technically "visible"
+    frame.classList.remove("hidden");
+    frame.style.display = "block";
+    frame.style.width = "1px";
+    frame.style.height = "1px";
+    frame.style.position = "fixed";
+    frame.style.top = "0";
+    frame.style.left = "0";
+    frame.style.opacity = "0";
+    frame.style.pointerEvents = "none";
+    frame.style.zIndex = "-1";
+
+    // Focus the iframe to preserve user activation
+    try {
+      if (frame.contentWindow) {
+        frame.contentWindow.focus();
+      }
+      frame.focus();
+    } catch (e) {
+      console.warn("Could not focus iframe:", e);
+    }
+
+    // Return restore function
+    return {
+      restore: () => {
+        if (this.child?.frame instanceof HTMLIFrameElement) {
+          const f = this.child.frame;
+          f.className = originalClasses;
+          f.style.display = originalStyle.display;
+          f.style.width = originalStyle.width;
+          f.style.height = originalStyle.height;
+          f.style.position = originalStyle.position;
+          f.style.opacity = originalStyle.opacity;
+          f.style.pointerEvents = originalStyle.pointerEvents;
+          f.style.zIndex = originalStyle.zIndex;
+        }
+      },
+    };
+  }
 
   /**
    * Prepare iframe for display as a modal dialog
@@ -720,7 +741,11 @@ export class OneShotPayClient implements IOneShotPayClient {
     backdrop.style.setProperty("left", "0", "important");
     backdrop.style.setProperty("width", "100%", "important");
     backdrop.style.setProperty("height", "100%", "important");
-    backdrop.style.setProperty("background-color", "rgba(0, 0, 0, 0.5)", "important");
+    backdrop.style.setProperty(
+      "background-color",
+      "rgba(0, 0, 0, 0.5)",
+      "important",
+    );
     backdrop.style.setProperty("z-index", "1", "important");
 
     // Style iframe as centered modal dialog
@@ -736,7 +761,11 @@ export class OneShotPayClient implements IOneShotPayClient {
     frame.style.setProperty("pointer-events", "auto", "important");
     frame.style.setProperty("border", "none", "important");
     frame.style.setProperty("border-radius", "8px", "important");
-    frame.style.setProperty("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)", "important");
+    frame.style.setProperty(
+      "box-shadow",
+      "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+      "important",
+    );
     frame.style.setProperty("margin", "0", "important");
     frame.style.setProperty("padding", "0", "important");
 
@@ -773,7 +802,8 @@ export class OneShotPayClient implements IOneShotPayClient {
           container.style.width = originalContainerStyle.width;
           container.style.height = originalContainerStyle.height;
           container.style.zIndex = originalContainerStyle.zIndex;
-          container.style.backgroundColor = originalContainerStyle.backgroundColor;
+          container.style.backgroundColor =
+            originalContainerStyle.backgroundColor;
           container.style.pointerEvents = originalContainerStyle.pointerEvents;
           container.style.removeProperty("align-items");
           container.style.removeProperty("justify-content");
