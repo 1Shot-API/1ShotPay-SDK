@@ -4,7 +4,7 @@ import {
   EVMAccountAddress,
   OneShotPay,
   UnixTimestamp,
-} from "@1shotapi/wallet";
+} from "@1shotapi/1shotpay-sdk";
 
 const statusTextarea = document.getElementById(
   "statusTextarea",

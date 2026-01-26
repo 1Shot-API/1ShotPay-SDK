@@ -1,5 +1,5 @@
 {
-  "name": "@1shotapi/wallet",
+  "name": "@1shotapi/1shotpay-sdk",
   "version": "0.0.1",
   "description": "SDK for embedding the 1ShotPay passkey wallet in your site",
   "type": "module",
@@ -29,7 +29,7 @@
   },
   "keywords": [
     "1shotapi",
-    "wallet",
+    "1shotpay-sdk",
     "passkey",
     "1shotpay",
     "sdk"
@@ -38,7 +38,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/1shotapi/wallet.git"
+    "url": "https://github.com/1shotapi/1shotpay-sdk.git"
   },
   "engines": {
     "node": ">=18"

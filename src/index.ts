@@ -1,5 +1,5 @@
 /**
- * @1shotapi/wallet
+ * @1shotapi/1shotpay-sdk
  *
  * SDK for embedding the 1ShotPay passkey wallet in your site
  */

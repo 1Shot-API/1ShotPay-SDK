@@ -1,13 +1,13 @@
-## 1Shot Wallet SDK (`@1shotapi/wallet`)
+## 1ShotPay SDK (`@1shotapi/1shotpay-sdk`)
 
 Embed the **1ShotPay passkey wallet** in your site via an iframe and call wallet actions through a simple TypeScript API.
 
-- **Live demo**: `https://1shot-api.github.io/Wallet/`
+- **Live demo**: `https://1shot-api.github.io/1shotpay-sdk/`
 
 ## Install
 
 ```bash
-yarn add @1shotapi/wallet
+yarn add @1shotapi/1shotpay-sdk
 ```
 
 ## Quick start
@@ -19,7 +19,7 @@ import {
   EVMAccountAddress,
   OneShotPay,
   UnixTimestamp,
-} from "@1shotapi/wallet";
+} from "@1shotapi/1shotpay-sdk";
 
 const wallet = new OneShotPay();
 
