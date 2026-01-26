@@ -10,23 +10,20 @@ import {
   IRPCWrapperReturn,
   ISignInParams,
   rpcCallbackEventName,
-} from "ProxyTypes";
-import { ObjectUtils } from "utils/ObjectUtils";
+} from "./ProxyTypes";
 import {
+  ObjectUtils,
   ISignedERC3009TransferWithAuthorization,
   ISignedPermitTransfer,
-} from "types/domain";
-import { AjaxError, BaseError, ProxyError } from "types/errors";
-import {
+  AjaxError,
+  BaseError,
+  ProxyError,
   BigNumberString,
   EVMAccountAddress,
   JSONString,
   UnixTimestamp,
   Username,
-} from "types/primitives";
-import { ELocale } from "types/enum";
-import { IOneShotPay } from "IOneShotPay";
-import {
+  ELocale,
   X402PaymentPayloadV2ExactEvm,
   X402PaymentRequirements,
   x402Base64EncodeUtf8,
@@ -35,9 +32,10 @@ import {
   x402NormalizeAcceptedPayments,
   x402ParseJsonOrBase64Json,
   x402ResolveRequestUrl,
-} from "utils/x402Utils";
+} from "@1shotapi/1shotpay-common";
+import { IOneShotPayClient } from "./IOneShotPayClient";
 
-export class OneShotPay implements IOneShotPay {
+export class OneShotPayClient implements IOneShotPayClient {
   protected child: Postmate.ParentAPI | null = null;
   protected rpcNonce = 0;
   protected rpcCallbacks = new Map<

@@ -67,6 +67,7 @@ export function x402Base64EncodeUtf8(input: string): Base64String {
     return Base64String(btoa(unescape(encodeURIComponent(input))));
   }
   // Node path (best-effort)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const B = (globalThis as any).Buffer;
   if (B) {
     return Base64String(B.from(input, "utf8").toString("base64"));
@@ -80,6 +81,7 @@ export function x402Base64DecodeUtf8(input: Base64String): string {
     return decodeURIComponent(escape(atob(input)));
   }
   // Node path (best-effort)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const B = (globalThis as any).Buffer;
   if (B) {
     return B.from(input, "base64").toString("utf8");

@@ -1,11 +1,11 @@
-import { IUserModel } from "types/models";
 import {
+  IUserModel,
   BigNumberString,
   EVMAccountAddress,
   JSONString,
   UnixTimestamp,
   Username,
-} from "types/primitives";
+} from "@1shotapi/1shotpay-common";
 
 export const rpcCallbackEventName = "rpcCallback";
 

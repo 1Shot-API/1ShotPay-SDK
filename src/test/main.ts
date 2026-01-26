@@ -1,10 +1,10 @@
+import { OneShotPayClient } from "@1shotapi/1shotpay-client-sdk";
 import {
   BigNumberString,
   ELocale,
   EVMAccountAddress,
-  OneShotPay,
   UnixTimestamp,
-} from "@1shotapi/1shotpay-sdk";
+} from "@1shotapi/1shotpay-common";
 
 const statusTextarea = document.getElementById(
   "statusTextarea",
@@ -60,8 +60,8 @@ function setIndicatorState(
   }
 }
 
-// Create wallet proxy instance
-const oneShotPay = new OneShotPay();
+// Create wallet proxy instance (Client SDK)
+const oneShotPay = new OneShotPayClient();
 
 // Set initial indicator state
 setIndicatorState(initIndicator, "active");

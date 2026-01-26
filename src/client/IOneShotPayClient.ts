@@ -1,22 +1,20 @@
 import { ResultAsync } from "neverthrow";
 
-import {
-  IAuthenticationResult,
-} from "ProxyTypes";
+import { IAuthenticationResult } from "./ProxyTypes";
 import {
   ISignedERC3009TransferWithAuthorization,
   ISignedPermitTransfer,
-} from "types/domain";
-import { AjaxError, ProxyError } from "types/errors";
+} from "@1shotapi/1shotpay-common";
+import { AjaxError, ProxyError } from "@1shotapi/1shotpay-common";
 import {
   BigNumberString,
   EVMAccountAddress,
   UnixTimestamp,
   Username,
-} from "types/primitives";
-import { ELocale } from "types/enum";
+} from "@1shotapi/1shotpay-common";
+import { ELocale } from "@1shotapi/1shotpay-common";
 
-export interface IOneShotPay {
+export interface IOneShotPayClient {
   /**
    * Check if the WalletProxy is initialized and ready to use
    */

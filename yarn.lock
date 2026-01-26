@@ -5,26 +5,57 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@1shotapi/wallet@workspace:.":
+"@1shotapi/1shotpay-client-sdk@workspace:src/client":
   version: 0.0.0-use.local
-  resolution: "@1shotapi/wallet@workspace:."
+  resolution: "@1shotapi/1shotpay-client-sdk@workspace:src/client"
+  dependencies:
+    "@1shotapi/1shotpay-common": "workspace:*"
+    "@types/postmate": "npm:^1"
+    neverthrow: "npm:^8.2.0"
+    postmate: "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch"
+    rimraf: "npm:^5.0.5"
+    safe-stable-stringify: "npm:^2.5.0"
+    tsup: "npm:^8.0.1"
+    typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
+"@1shotapi/1shotpay-common@workspace:*, @1shotapi/1shotpay-common@workspace:src/common":
+  version: 0.0.0-use.local
+  resolution: "@1shotapi/1shotpay-common@workspace:src/common"
+  dependencies:
+    rimraf: "npm:^5.0.5"
+    ts-brand: "npm:^0.2.0"
+    tsup: "npm:^8.0.1"
+    typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
+"@1shotapi/1shotpay-sdk-monorepo@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@1shotapi/1shotpay-sdk-monorepo@workspace:."
   dependencies:
     "@types/node": "npm:^25.0.8"
-    "@types/postmate": "npm:^1"
     "@typescript-eslint/eslint-plugin": "npm:^6.19.0"
     "@typescript-eslint/parser": "npm:^6.19.0"
     eslint: "npm:^8.56.0"
     eslint-config-prettier: "npm:^9.1.0"
-    neverthrow: "npm:^8.2.0"
-    postmate: "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch"
     prettier: "npm:^3.2.4"
     rimraf: "npm:^5.0.5"
-    safe-stable-stringify: "npm:^2.5.0"
-    ts-brand: "npm:^0.2.0"
-    tsup: "npm:^8.0.1"
     typescript: "npm:^5.3.3"
     vite: "npm:^5.1.0"
     vite-tsconfig-paths: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
+"@1shotapi/1shotpay-server-sdk@workspace:src/server":
+  version: 0.0.0-use.local
+  resolution: "@1shotapi/1shotpay-server-sdk@workspace:src/server"
+  dependencies:
+    "@1shotapi/1shotpay-common": "workspace:*"
+    rimraf: "npm:^5.0.5"
+    tsup: "npm:^8.0.1"
+    typescript: "npm:^5.3.3"
   languageName: unknown
   linkType: soft
 

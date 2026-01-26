@@ -1,4 +1,4 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import { okAsync, ResultAsync } from "neverthrow";
 import stringify from "safe-stable-stringify";
 
 import { ValidationError } from "types/errors";

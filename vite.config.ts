@@ -18,11 +18,14 @@ export default defineConfig({
       root: "../..",
     }),
   ],
-  // Ensure the test app imports from the source entrypoint (not dist/) while developing locally.
-  // This keeps `import { ... } from "@1shotapi/1shotpay-sdk"` working without needing to rebuild `dist/`.
+  // Resolve workspace packages to source for local dev (no need to rebuild between changes).
+  // Common uses bare "types/" and "utils/" internally; alias them for bundling.
   resolve: {
     alias: {
-      "@1shotapi/1shotpay-sdk": path.resolve(__dirname, "src/index.ts"),
+      "@1shotapi/1shotpay-client-sdk": path.resolve(__dirname, "src/client/index.ts"),
+      "@1shotapi/1shotpay-common": path.resolve(__dirname, "src/common/index.ts"),
+      "types": path.resolve(__dirname, "src/common/types"),
+      "utils": path.resolve(__dirname, "src/common/utils"),
     },
   },
   server: {
