@@ -15,8 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": []
+    "types": ["node"]
   },
-  "include": ["*.ts", "../common/utils/TimeUtils.ts", "../common/utils/ITimeUtils.ts"],
+  "include": ["*.ts"],
   "exclude": ["node_modules", "dist"]
 }

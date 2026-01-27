@@ -25,6 +25,7 @@ __metadata:
   resolution: "@1shotapi/1shotpay-common@workspace:src/common"
   dependencies:
     inversify: "npm:^7.11.0"
+    neverthrow: "npm:^8.2.0"
     rimraf: "npm:^5.0.5"
     ts-brand: "npm:^0.2.0"
     tsup: "npm:^8.0.1"
@@ -53,6 +54,8 @@ __metadata:
   resolution: "@1shotapi/1shotpay-server-sdk@workspace:src/server"
   dependencies:
     "@1shotapi/1shotpay-common": "workspace:*"
+    "@types/node": "npm:^20"
+    neverthrow-result-utils: "npm:^3.0.0"
     rimraf: "npm:^5.0.5"
     tsup: "npm:^8.0.1"
     typescript: "npm:^5.3.3"
@@ -844,6 +847,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^20":
+  version: 20.19.30
+  resolution: "@types/node@npm:20.19.30"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/23dbea652727d947ea35fc1c4e8acb7e1c535e85f6c139c3a4697864a5af164655ce305ab0877ea4cca537deee0405bf56aeac714f236ae1a3dd0fa6b87cc860
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^25.0.8":
   version: 25.0.8
   resolution: "@types/node@npm:25.0.8"
@@ -1268,6 +1280,13 @@ __metadata:
   version: 0.1.4
   resolution: "deep-is@npm:0.1.4"
   checksum: 10c0/7f0ee496e0dff14a573dc6127f14c95061b448b87b995fc96c017ce0a1e66af1675e73f1d6064407975bc4ea6ab679497a29fff7b5b9c4e99cb10797c1ad0b4c
+  languageName: node
+  linkType: hard
+
+"delay@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "delay@npm:5.0.0"
+  checksum: 10c0/01cdc4cd0cd35fb622518a3df848e67e09763a38e7cdada2232b6fda9ddda72eddcf74f0e24211200fbe718434f2335f2a2633875a6c96037fefa6de42896ad7
   languageName: node
   linkType: hard
 
@@ -2373,6 +2392,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"neverthrow-result-utils@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "neverthrow-result-utils@npm:3.0.0"
+  dependencies:
+    delay: "npm:^5.0.0"
+    neverthrow: "npm:^8.2.0"
+  checksum: 10c0/2075633d9fc25cc9b222a1160f74fd6fbc43ecfa4181a4864cbd21185462c3484eb6c63635394f21f43954c105333138568f8120e0943fcff8f40ec8b35fde4d
+  languageName: node
+  linkType: hard
+
 "neverthrow@npm:^8.2.0":
   version: 8.2.0
   resolution: "neverthrow@npm:8.2.0"
@@ -3188,6 +3217,13 @@ __metadata:
   version: 1.6.2
   resolution: "ufo@npm:1.6.2"
   checksum: 10c0/cc2610b48803d4c73b375e4fd43b0db63e9413726637a4974be2a382a5c971696a64d28d0f107d6ff3b4570e0a031f436d79fe545c3c070d6525130a4abaf39c
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
   languageName: node
   linkType: hard
 

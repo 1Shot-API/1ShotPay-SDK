@@ -36,11 +36,13 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "rimraf": "^5.0.5",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@1shotapi/1shotpay-common": "workspace:*"
+    "@1shotapi/1shotpay-common": "workspace:*",
+    "neverthrow-result-utils": "^3.0.0"
   }
 }

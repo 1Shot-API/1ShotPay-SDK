@@ -9,6 +9,8 @@ export * from "./types/primitives";
 export * from "./types/domain";
 export * from "./types/errors";
 export * from "./types/models";
+export * from "./utils/IAjaxUtils";
+export * from "./utils/AjaxUtils";
 export * from "./utils/ITimeUtils";
 export * from "./utils/ObjectUtils";
 export * from "./utils/TimeUtils";
