@@ -5,12 +5,14 @@ Server-side SDK for 1ShotPay API integration. Published as **@1shotapi/1shotpay-
 ## Install
 
 ```bash
-yarn add @1shotapi/1shotpay-server-sdk
+yarn add @1shotapi/1shotpay-server-sdk @1shotapi/1shotpay-common
 ```
+
+Import shared types (UserId, DecimalAmount, AjaxError, PayLinkId, etc.) from **@1shotapi/1shotpay-common** when you need them.
 
 ## Contents
 
-This package currently re-exports everything from **@1shotapi/1shotpay-common** (shared types and utilities). Server-specific APIs will be added in future releases.
+Server-specific APIs: **OneShotPayServer**, **IOneShotPayServer**, **IPayLink**, **IPayLinkPayment**, **IPayLinkOptions**. This package does not re-export common.
 
 ## Build & publish (from repo root)
 

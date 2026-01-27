@@ -25,6 +25,7 @@ export interface IPayLinkPayment {
 
 export interface IPayLink {
   id: PayLinkId;
+  url: URLString;
   userId: UserId;
   username: Username;
   accountAddress: EVMAccountAddress;

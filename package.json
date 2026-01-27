@@ -6,7 +6,8 @@
   "workspaces": [
     "src/common",
     "src/client",
-    "src/server"
+    "src/server",
+    "src/examples/server"
   ],
   "scripts": {
     "build": "yarn workspaces foreach -At run build",
@@ -16,6 +17,7 @@
     "build:test": "vite build",
     "build:test:gh-pages": "vite build",
     "dev": "vite",
+    "server-example": "yarn workspace 1shotpay-server-example start",
     "typecheck": "yarn workspaces foreach -At run typecheck",
     "lint": "eslint \"src/**/*.ts\" --ext .ts",
     "lint:fix": "eslint \"src/**/*.ts\" --ext .ts --fix",

@@ -14,6 +14,8 @@ import {
   DecimalAmount,
   EPayLinkStatus,
   RetryError,
+  URLString,
+  ELocale,
 } from "@1shotapi/1shotpay-common";
 import { IPayLink } from "./PayLink";
 import { IOneShotPayServer, IPayLinkOptions } from "./IOneShotPayServer";
@@ -29,6 +31,7 @@ export class OneShotPayServer implements IOneShotPayServer {
   public constructor(
     protected readonly userId: UserId,
     protected readonly apiToken: string,
+    protected readonly locale: ELocale = ELocale.English,
   ) {
     this.timeUtils = new TimeUtils();
     this.ajaxUtils = new AjaxUtils();
@@ -39,23 +42,47 @@ export class OneShotPayServer implements IOneShotPayServer {
     description: string,
     options?: IPayLinkOptions,
   ): ResultAsync<IPayLink, AjaxError> {
-    return this.ajaxUtils.post<IPayLink>(
-      `http://1shotpay.com/api/m2m/v0/links`,
-      {
-        amount: amount,
-        description,
-        mediaUrl: options?.mediaUrl,
-        reuseable: options?.reuseable ? true : false,
-        expirationTimestamp: options?.expirationTimestamp,
-        requestedPayerUserId: options?.requestedPayerUserId,
-      },
-    );
+    return this.getRelayerJWT()
+      .andThen((jwt) => {
+        return this.ajaxUtils.post<IPayLink>(
+          `https://1shotpay.com/api/m2m/v0/links`,
+          {
+            amount: amount,
+            description,
+            mediaUrl: options?.mediaUrl,
+            reuseable: options?.reuseable ? true : false,
+            expirationTimestamp: options?.expirationTimestamp,
+            requestedPayerUserId: options?.requestedPayerUserId,
+          },
+          {
+            headers: { Authorization: `Bearer ${jwt}` },
+          },
+        );
+      })
+      .map((payLink) => {
+        payLink.url = URLString(
+          `https://1shotpay.com/${this.locale}/link/${payLink.id}`,
+        );
+        return payLink;
+      });
   }
 
   public getPayLink(payLinkId: PayLinkId): ResultAsync<IPayLink, AjaxError> {
-    return this.ajaxUtils.get<IPayLink>(
-      `http://1shotpay.com/api/m2m/v0/links/${payLinkId}`,
-    );
+    return this.getRelayerJWT()
+      .andThen((jwt) => {
+        return this.ajaxUtils.get<IPayLink>(
+          `https://1shotpay.com/api/m2m/v0/links/${payLinkId}`,
+          {
+            headers: { Authorization: `Bearer ${jwt}` },
+          },
+        );
+      })
+      .map((payLink) => {
+        payLink.url = URLString(
+          `https://1shotpay.com/${this.locale}/link/${payLink.id}`,
+        );
+        return payLink;
+      });
   }
 
   public waitForPayLinkPayment(
@@ -105,6 +132,7 @@ export class OneShotPayServer implements IOneShotPayServer {
         },
       )
       .map((response) => {
+        console.log("Payments jwt response", response);
         this.currentJWT = response.access_token;
         this.currentJWTExpiresAt = UnixTimestamp(
           this.timeUtils.getUnixNow() + response.expires_in,
