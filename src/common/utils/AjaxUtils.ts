@@ -1,12 +1,13 @@
 import { ResultAsync } from "neverthrow";
 
-import { AjaxError } from "types/errors";
-import type { JsonWebToken } from "types/primitives";
 import type {
   IAjaxRequestConfig,
   IAjaxRequestBody,
   IAjaxUtils,
 } from "./IAjaxUtils";
+
+import { AjaxError } from "types/errors";
+import type { JsonWebToken } from "types/primitives";
 
 function isJsonBody(
   data: IAjaxRequestBody,

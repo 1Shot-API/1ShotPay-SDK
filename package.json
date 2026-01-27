@@ -19,8 +19,8 @@
     "dev": "vite",
     "server-example": "yarn workspace 1shotpay-server-example start",
     "typecheck": "yarn workspaces foreach -At run typecheck",
-    "lint": "eslint \"src/**/*.ts\" --ext .ts",
-    "lint:fix": "eslint \"src/**/*.ts\" --ext .ts --fix",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "clean": "rimraf dist docs src/common/dist src/client/dist src/server/dist",
@@ -39,14 +39,18 @@
   },
   "packageManager": "yarn@4.1.1",
   "devDependencies": {
+    "@eslint/compat": "^1.2.4",
+    "@eslint/js": "^9.15.0",
     "@types/node": "^25.0.8",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
-    "eslint": "^8.56.0",
+    "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3",
+    "typescript-eslint": "^8.15.0",
     "vite": "^5.1.0"
   }
 }

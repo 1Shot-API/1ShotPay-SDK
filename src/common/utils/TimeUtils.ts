@@ -1,11 +1,12 @@
 import { injectable } from "inversify";
 
+import type { ITimeUtils } from "./ITimeUtils";
+
 import {
   ISO8601DateString,
   MillisecondTimestamp,
   UnixTimestamp,
 } from "types/primitives";
-import type { ITimeUtils } from "./ITimeUtils";
 
 @injectable()
 export class TimeUtils implements ITimeUtils {

@@ -1,12 +1,12 @@
 import "reflect-metadata";
 import "dotenv/config";
-import express, { type Request, type Response } from "express";
-import { OneShotPayServer } from "@1shotapi/1shotpay-server-sdk";
 import {
   DecimalAmount,
   UserId,
   type AjaxError,
 } from "@1shotapi/1shotpay-common";
+import { OneShotPayServer } from "@1shotapi/1shotpay-server-sdk";
+import express, { type Request, type Response } from "express";
 
 const app = express();
 app.use(express.json());

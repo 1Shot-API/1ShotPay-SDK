@@ -1,18 +1,17 @@
-import { ResultAsync } from "neverthrow";
-
-import { IAuthenticationResult } from "./ProxyTypes";
 import {
-  ISignedERC3009TransferWithAuthorization,
-  ISignedPermitTransfer,
-} from "@1shotapi/1shotpay-common";
-import { AjaxError, ProxyError } from "@1shotapi/1shotpay-common";
-import {
+  AjaxError,
+  ProxyError,
   BigNumberString,
   EVMAccountAddress,
   UnixTimestamp,
   Username,
+  ELocale,
+  ISignedERC3009TransferWithAuthorization,
+  ISignedPermitTransfer,
 } from "@1shotapi/1shotpay-common";
-import { ELocale } from "@1shotapi/1shotpay-common";
+import { ResultAsync } from "neverthrow";
+
+import { IAuthenticationResult } from "./ProxyTypes";
 
 export interface IOneShotPayClient {
   /**

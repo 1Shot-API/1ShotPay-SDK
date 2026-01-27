@@ -1,5 +1,3 @@
-import { ResultAsync } from "neverthrow";
-
 import {
   PayLinkId,
   UnixTimestamp,
@@ -8,6 +6,8 @@ import {
   DecimalAmount,
   AjaxError,
 } from "@1shotapi/1shotpay-common";
+import { ResultAsync } from "neverthrow";
+
 import { IPayLink } from "./PayLink";
 
 export interface IOneShotPayServer {

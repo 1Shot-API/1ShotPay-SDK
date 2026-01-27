@@ -1,5 +1,3 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
-
 import {
   JsonWebToken,
   PayLinkId,
@@ -17,10 +15,11 @@ import {
   URLString,
   ELocale,
 } from "@1shotapi/1shotpay-common";
-import { IPayLink } from "./PayLink";
-import { IOneShotPayServer, IPayLinkOptions } from "./IOneShotPayServer";
-
+import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { ResultUtils } from "neverthrow-result-utils";
+
+import { IOneShotPayServer, IPayLinkOptions } from "./IOneShotPayServer";
+import { IPayLink } from "./PayLink";
 
 export class OneShotPayServer implements IOneShotPayServer {
   protected currentJWT = JsonWebToken("");

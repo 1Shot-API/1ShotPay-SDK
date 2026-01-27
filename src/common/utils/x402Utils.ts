@@ -1,3 +1,4 @@
+import { IERC3009TransferWithAuthorization } from "types/domain";
 import {
   Base64String,
   BigNumberString,
@@ -6,7 +7,6 @@ import {
   Signature,
   URLString,
 } from "types/primitives";
-import { IERC3009TransferWithAuthorization } from "types/domain";
 
 export type X402PaymentRequirements = {
   // x402 v2 uses x402Version, older drafts may use version-like fields

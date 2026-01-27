@@ -49,7 +49,7 @@ export interface IGetPermitSignatureParams {
   deadlineSeconds: number;
 }
 
-export interface ICreateDelegationParams {}
+// export interface ICreateDelegationParams {}
 
 export interface IGetAccountAddressResponse {
   accountAddress: EVMAccountAddress;

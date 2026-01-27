@@ -1,16 +1,3 @@
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
-import Postmate from "postmate";
-
-import {
-  IAuthenticationResult,
-  IGetAccountAddressResponse,
-  IGetERC3009SignatureParams,
-  IGetPermitSignatureParams,
-  IRPCWrapperParams,
-  IRPCWrapperReturn,
-  ISignInParams,
-  rpcCallbackEventName,
-} from "./ProxyTypes";
 import {
   ObjectUtils,
   ISignedERC3009TransferWithAuthorization,
@@ -33,7 +20,20 @@ import {
   x402ParseJsonOrBase64Json,
   x402ResolveRequestUrl,
 } from "@1shotapi/1shotpay-common";
+import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import Postmate from "postmate";
+
 import { IOneShotPayClient } from "./IOneShotPayClient";
+import {
+  IAuthenticationResult,
+  IGetAccountAddressResponse,
+  IGetERC3009SignatureParams,
+  IGetPermitSignatureParams,
+  IRPCWrapperParams,
+  IRPCWrapperReturn,
+  ISignInParams,
+  rpcCallbackEventName,
+} from "./ProxyTypes";
 
 export class OneShotPayClient implements IOneShotPayClient {
   protected child: Postmate.ParentAPI | null = null;
