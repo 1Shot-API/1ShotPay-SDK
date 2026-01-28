@@ -131,7 +131,6 @@ export class OneShotPayServer implements IOneShotPayServer {
         },
       )
       .map((response) => {
-        console.log("Payments jwt response", response);
         this.currentJWT = response.access_token;
         this.currentJWTExpiresAt = UnixTimestamp(
           this.timeUtils.getUnixNow() + response.expires_in,

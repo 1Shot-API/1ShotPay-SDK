@@ -89,7 +89,7 @@ app.post("/api/checkout", async (_req: Request, res: Response) => {
       closeOnComplete: true,
     })
     .map((payLink) => {
-      console.log("Pay link created:", payLink);
+      console.log("Pay link created!");
       return payLink;
     })
     .mapErr((e) => {
