@@ -85,7 +85,9 @@ app.post("/api/checkout", async (_req: Request, res: Response) => {
   }
 
   const result = await oneShotPayServer
-    .createPayLink(DecimalAmount(total), "1Shot Widgets – your order")
+    .createPayLink(DecimalAmount(total), "1Shot Widgets – your order", {
+      closeOnComplete: true,
+    })
     .map((payLink) => {
       console.log("Pay link created:", payLink);
       return payLink;

@@ -60,7 +60,7 @@ export class OneShotPayServer implements IOneShotPayServer {
       })
       .map((payLink) => {
         payLink.url = URLString(
-          `https://1shotpay.com/${this.locale}/link/${payLink.id}`,
+          `https://1shotpay.com/${this.locale}/link/${payLink.id}${options?.closeOnComplete == true ? "?closeOnComplete=true" : ""}`,
         );
         return payLink;
       });

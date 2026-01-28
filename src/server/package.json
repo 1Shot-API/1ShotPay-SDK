@@ -1,6 +1,6 @@
 {
   "name": "@1shotapi/1shotpay-server-sdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Server SDK for 1ShotPay API integration",
   "type": "module",
   "main": "./dist/index.js",

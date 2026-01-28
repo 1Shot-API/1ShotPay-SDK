@@ -27,4 +27,5 @@ export interface IPayLinkOptions {
   reuseable?: boolean;
   expirationTimestamp?: UnixTimestamp;
   requestedPayerUserId?: UserId;
+  closeOnComplete?: boolean;
 }
