@@ -1,11 +1,21 @@
+# Dependencies and build outputs
 node_modules
+**/node_modules/**
 dist
+**/dist/**
 dist-test
+**/dist-test/**
 build
 coverage
+
+# Yarn / tooling
 .yarn
+.pnp.*
+
+# Config files (not source)
 *.config.js
 *.config.ts
-.pnp.*
-src/test
+*.config.mjs
 
+# Test app (separate from linted packages)
+src/test
