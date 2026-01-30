@@ -36,7 +36,7 @@ jobs:
       - name: Build test app for GitHub Pages
         run: yarn build:test:gh-pages
         env:
-          VITE_BASE_PATH: /Wallet/
+          VITE_BASE_PATH: /1shotpay-sdk/
 
       - name: List build output
         run: |

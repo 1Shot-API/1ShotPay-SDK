@@ -1,0 +1,26 @@
+{
+  "name": "1shotpay-server-example",
+  "version": "0.0.1",
+  "private": true,
+  "description": "1Shot Widgets — example ecommerce app using OneShotPayServer",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
+  "dependencies": {
+    "@1shotapi/1shotpay-common": "workspace:*",
+    "@1shotapi/1shotpay-server-sdk": "workspace:*",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20",
+    "tsx": "^4.19.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

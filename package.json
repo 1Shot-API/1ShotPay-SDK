@@ -1,67 +1,56 @@
 {
-  "name": "@1shotapi/wallet",
-  "version": "0.0.1",
-  "description": "SDK for embedding the 1ShotPay passkey wallet in your site",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
+  "name": "@1shotapi/1shotpay-sdk-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "1ShotPay SDK monorepo — client, server, and shared packages",
+  "workspaces": [
+    "src/common",
+    "src/client",
+    "src/server",
+    "src/examples/server"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "yarn workspaces foreach -At run build",
+    "build:common": "yarn workspace @1shotapi/1shotpay-common run build",
+    "build:client": "yarn workspace @1shotapi/1shotpay-client-sdk run build",
+    "build:server": "yarn workspace @1shotapi/1shotpay-server-sdk run build",
     "build:test": "vite build",
     "build:test:gh-pages": "vite build",
     "dev": "vite",
-    "dev:watch": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
+    "server-example": "yarn workspace 1shotpay-server-example start",
+    "typecheck": "yarn workspaces foreach -At run typecheck",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
-    "clean": "rimraf dist dist-test docs"
+    "clean": "rimraf dist docs src/common/dist src/client/dist src/server/dist",
+    "publish:common": "yarn run build:common && yarn workspace @1shotapi/1shotpay-common npm publish --access public --tolerate-republish",
+    "publish:client": "yarn run build && yarn workspace @1shotapi/1shotpay-client-sdk npm publish --access public --tolerate-republish",
+    "publish:server": "yarn run build && yarn workspace @1shotapi/1shotpay-server-sdk npm publish --access public --tolerate-republish"
   },
-  "keywords": [
-    "1shotapi",
-    "wallet",
-    "passkey",
-    "1shotpay",
-    "sdk"
-  ],
   "author": "1Shot API",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/1shotapi/wallet.git"
+    "url": "https://github.com/1shotapi/1shotpay-sdk.git"
   },
   "engines": {
     "node": ">=18"
   },
   "packageManager": "yarn@4.1.1",
   "devDependencies": {
+    "@eslint/compat": "^1.2.4",
+    "@eslint/js": "^9.15.0",
     "@types/node": "^25.0.8",
-    "@types/postmate": "^1",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
-    "eslint": "^8.56.0",
+    "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.5",
-    "tsup": "^8.0.1",
     "typescript": "^5.3.3",
-    "vite": "^5.1.0",
-    "vite-tsconfig-paths": "^6.0.3"
-  },
-  "dependencies": {
-    "neverthrow": "^8.2.0",
-    "postmate": "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch",
-    "safe-stable-stringify": "^2.5.0",
-    "ts-brand": "^0.2.0"
+    "typescript-eslint": "^8.15.0",
+    "vite": "^5.1.0"
   }
 }

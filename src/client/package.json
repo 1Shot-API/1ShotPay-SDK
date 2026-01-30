@@ -1,0 +1,54 @@
+{
+  "name": "@1shotapi/1shotpay-client-sdk",
+  "version": "0.1.0",
+  "description": "Client SDK for embedding the 1ShotPay passkey wallet in your site",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "1shotapi",
+    "1shotpay",
+    "1shotpay-client-sdk",
+    "passkey",
+    "wallet",
+    "sdk"
+  ],
+  "author": "1Shot API",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1shotapi/1shotpay-sdk.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/postmate": "^1",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@1shotapi/1shotpay-common": "workspace:*",
+    "neverthrow": "^8.2.0",
+    "postmate": "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch",
+    "safe-stable-stringify": "^2.5.0"
+  }
+}
