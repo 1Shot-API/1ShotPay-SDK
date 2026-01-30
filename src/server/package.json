@@ -32,6 +32,9 @@
     "type": "git",
     "url": "https://github.com/1shotapi/1shotpay-sdk.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18"
   },

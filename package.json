@@ -24,9 +24,9 @@
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "clean": "rimraf dist docs src/common/dist src/client/dist src/server/dist",
-    "publish:common": "yarn run build:common && yarn npm publish -w @1shotapi/1shotpay-common",
-    "publish:client": "yarn run build && yarn npm publish -w @1shotapi/1shotpay-client-sdk",
-    "publish:server": "yarn run build && yarn npm publish -w @1shotapi/1shotpay-server-sdk"
+    "publish:common": "yarn run build:common && yarn workspace @1shotapi/1shotpay-common npm publish --access public --tolerate-republish",
+    "publish:client": "yarn run build && yarn workspace @1shotapi/1shotpay-client-sdk npm publish --access public --tolerate-republish",
+    "publish:server": "yarn run build && yarn workspace @1shotapi/1shotpay-server-sdk npm publish --access public --tolerate-republish"
   },
   "author": "1Shot API",
   "license": "MIT",
