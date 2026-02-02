@@ -25,9 +25,8 @@ __metadata:
   resolution: "@1shotapi/1shotpay-client-sdk@workspace:src/client"
   dependencies:
     "@1shotapi/1shotpay-common": "workspace:*"
-    "@types/postmate": "npm:^1"
+    "@1shotapi/postmate": "npm:^1.5.5"
     neverthrow: "npm:^8.2.0"
-    postmate: "patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch"
     rimraf: "npm:^5.0.5"
     safe-stable-stringify: "npm:^2.5.0"
     tsup: "npm:^8.0.1"
@@ -81,6 +80,13 @@ __metadata:
     typescript: "npm:^5.3.3"
   languageName: unknown
   linkType: soft
+
+"@1shotapi/postmate@npm:^1.5.5":
+  version: 1.5.5
+  resolution: "@1shotapi/postmate@npm:1.5.5"
+  checksum: 10c0/a383ea5442875c3a91b530d09471f5a6c7f60d9ce07df4bdd83fa7a436a4a23dd52d9674dc0c3242ec42b590e9347954bcb20c7243146efafa50c5dcb04126fd
+  languageName: node
+  linkType: hard
 
 "@emnapi/core@npm:^1.4.3":
   version: 1.8.1
@@ -1063,13 +1069,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~7.16.0"
   checksum: 10c0/2282464cd928ab184b2310b79899c76bfaa88c8d14640dfab2f9218fdee7e2d916056492de683aa3a26050c8f3bbcade0305616a55277a7c344926c0393149e0
-  languageName: node
-  linkType: hard
-
-"@types/postmate@npm:^1":
-  version: 1.5.4
-  resolution: "@types/postmate@npm:1.5.4"
-  checksum: 10c0/a5c52542ee843ef0732ae4041c626bbecd7de93adb912086a240a4d5a2154e908eba555fac42b9615c8d111a3f97460402741b6caa88cbfae1ec712f13d7158e
   languageName: node
   linkType: hard
 
@@ -4107,20 +4106,6 @@ __metadata:
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
   checksum: 10c0/5127cc7c91ed7a133a1b7318012d8bfa112da9ef092dddf369ae699a1f10ebbd89b1b9f25f3228795b84585c72aabd5ced5fc11f2ba467eedf7b081a66fad024
-  languageName: node
-  linkType: hard
-
-"postmate@npm:1.5.2":
-  version: 1.5.2
-  resolution: "postmate@npm:1.5.2"
-  checksum: 10c0/a6ef50768bd99b56f8bf8f961fcadca4b96c2748b1639d225d9bb9b15b2cd5af6c4aed91e2c05c41c666fdfc0010d1011ea0e3f9b97c7d1c7b687ee83227ebd5
-  languageName: node
-  linkType: hard
-
-"postmate@patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch":
-  version: 1.5.2
-  resolution: "postmate@patch:postmate@npm%3A1.5.2#~/.yarn/patches/postmate-npm-1.5.2-42e47e1e5b.patch::version=1.5.2&hash=359120"
-  checksum: 10c0/e2cdbc112ac558b33f78a7c4cc98723257049a27226782ecbf64325e891b0cfab4d0a61cb04ee36d2ae5f94b505b6383c48f2dd56b0b640d3925369e72d6f96e
   languageName: node
   linkType: hard
 
