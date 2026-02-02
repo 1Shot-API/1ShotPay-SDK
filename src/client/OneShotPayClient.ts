@@ -341,157 +341,170 @@ export class OneShotPayClient implements IOneShotPayClient {
         initialResponse.headers.get("payment-required") ??
         initialResponse.headers.get("PAYMENT-REQUIRED");
 
-      if (!paymentRequiredHeader) {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              "Received HTTP 402 but missing PAYMENT-REQUIRED header for x402.",
+      const getReq = (): ResultAsync<X402PaymentRequirements, AjaxError> => {
+        if (paymentRequiredHeader) {
+          try {
+            const parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
+            return okAsync(parsed as X402PaymentRequirements);
+          } catch (e) {
+            return errAsync(
+              new AjaxError(
+                new Error(
+                  `Failed to parse PAYMENT-REQUIRED header for x402: ${(e as Error).message}`,
+                ),
+              ),
+            );
+          }
+        }
+        return ResultAsync.fromPromise(initialResponse.json(), (e) =>
+          AjaxError.fromError(e as Error),
+        ).andThen((body) => {
+          if (
+            body != null &&
+            typeof body === "object" &&
+            ("x402Version" in body || "accepts" in body || "accepted" in body)
+          ) {
+            return okAsync(body as X402PaymentRequirements);
+          }
+          return errAsync(
+            new AjaxError(
+              new Error(
+                "Received HTTP 402 but missing PAYMENT-REQUIRED header and body is not x402 JSON.",
+              ),
             ),
-          ),
-        );
-      }
+          );
+        });
+      };
 
-      let parsed: unknown;
-      try {
-        parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
-      } catch (e) {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              `Failed to parse PAYMENT-REQUIRED header for x402: ${(e as Error).message}`,
+      return getReq().andThen((req) => {
+        const accepted = x402NormalizeAcceptedPayments(req);
+        const exact = accepted.find(
+          (p) => (p.scheme ?? "").toLowerCase() === "exact",
+        );
+
+        if (!exact) {
+          return errAsync(
+            new AjaxError(
+              new Error(
+                "x402 endpoint does not offer the Exact scheme (required).",
+              ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      const req = parsed as X402PaymentRequirements;
-      const accepted = x402NormalizeAcceptedPayments(req);
-      const exact = accepted.find(
-        (p) => (p.scheme ?? "").toLowerCase() === "exact",
-      );
+        const network = exact.network;
+        const amount = exact.amount;
+        const asset = exact.asset;
+        const payTo = exact.payTo;
 
-      if (!exact) {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              "x402 endpoint does not offer the Exact scheme (required).",
+        if (!network || !amount || !asset || !payTo) {
+          return errAsync(
+            new AjaxError(
+              new Error(
+                "x402 PAYMENT-REQUIRED header missing one of: network, amount, asset, payTo.",
+              ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      const network = exact.network;
-      const amount = exact.amount;
-      const asset = exact.asset;
-      const payTo = exact.payTo;
-
-      if (!network || !amount || !asset || !payTo) {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              "x402 PAYMENT-REQUIRED header missing one of: network, amount, asset, payTo.",
+        const chainId = x402GetChainIdFromNetwork(network);
+        if (chainId == null) {
+          return errAsync(
+            new AjaxError(
+              new Error(
+                `Unsupported x402 network "${network}". Only eip155:<chainId> is supported.`,
+              ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      const chainId = x402GetChainIdFromNetwork(network);
-      if (chainId == null) {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              `Unsupported x402 network "${network}". Only eip155:<chainId> is supported.`,
+        if (!x402IsUsdcOnBase(chainId, asset)) {
+          return errAsync(
+            new AjaxError(
+              new Error(
+                `Unsupported x402 payment. Only USDC on Base is supported (got asset=${asset}, network=${network}).`,
+              ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      if (!x402IsUsdcOnBase(chainId, asset)) {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              `Unsupported x402 payment. Only USDC on Base is supported (got asset=${asset}, network=${network}).`,
+        // Enforce asset transfer method (Exact + EIP-3009)
+        const extra = (exact.extra ?? {}) as Record<string, unknown>;
+        const method =
+          (extra["assetTransferMethod"] as string | undefined) ??
+          ((extra as Record<string, unknown>)["asset_transfer_method"] as
+            | string
+            | undefined);
+        if (method && method.toLowerCase() !== "eip3009") {
+          return errAsync(
+            new AjaxError(
+              new Error(
+                `Unsupported x402 assetTransferMethod "${method}". Only "eip3009" is supported.`,
+              ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      // Enforce asset transfer method (Exact + EIP-3009)
-      const extra = (exact.extra ?? {}) as Record<string, unknown>;
-      const method =
-        (extra["assetTransferMethod"] as string | undefined) ??
-        ((extra as Record<string, unknown>)["asset_transfer_method"] as
-          | string
-          | undefined);
-      if (method && method.toLowerCase() !== "eip3009") {
-        return errAsync(
-          new AjaxError(
-            new Error(
-              `Unsupported x402 assetTransferMethod "${method}". Only "eip3009" is supported.`,
-            ),
-          ),
-        );
-      }
+        // Signature validity window
+        const maxTimeoutSeconds =
+          typeof exact.maxTimeoutSeconds === "number"
+            ? exact.maxTimeoutSeconds
+            : 60;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const validAfter = UnixTimestamp(nowSeconds);
+        const validUntil = UnixTimestamp(nowSeconds + maxTimeoutSeconds);
 
-      // Signature validity window
-      const maxTimeoutSeconds =
-        typeof exact.maxTimeoutSeconds === "number"
-          ? exact.maxTimeoutSeconds
-          : 60;
-      const nowSeconds = Math.floor(Date.now() / 1000);
-      const validAfter = UnixTimestamp(nowSeconds);
-      const validUntil = UnixTimestamp(nowSeconds + maxTimeoutSeconds);
+        // Use request URL as "recipient" string for wallet UX
+        const requestUrl = x402ResolveRequestUrl(input);
 
-      // Use request URL as "recipient" string for wallet UX
-      const requestUrl = x402ResolveRequestUrl(input);
-
-      // Generate the ERC-3009 signature via the embedded wallet
-      return this.getERC3009Signature(
-        requestUrl,
-        payTo,
-        amount,
-        validUntil,
-        validAfter,
-      ).andThen((signed: ISignedERC3009TransferWithAuthorization) => {
-        const paymentPayload: X402PaymentPayloadV2ExactEvm = {
-          x402Version:
-            typeof req.x402Version === "number" ? req.x402Version : 2,
-          resource: {
-            url: (req.resource?.url ?? requestUrl) as unknown as string,
-            ...(req.resource?.description
-              ? { description: req.resource.description }
-              : {}),
-            ...(req.resource?.mimeType
-              ? { mimeType: req.resource.mimeType }
-              : {}),
-          },
-          accepted: {
-            scheme: "exact",
-            network,
-            amount,
-            asset,
-            payTo,
-            maxTimeoutSeconds,
-            ...(Object.keys(extra).length ? { extra } : {}),
-          },
-          payload: {
-            signature: signed.signature,
-            authorization: {
-              from: signed.from,
-              to: signed.to,
-              value: signed.value,
-              validAfter: signed.validAfter,
-              validBefore: signed.validBefore,
-              nonce: signed.nonce,
+        // Generate the ERC-3009 signature via the embedded wallet
+        return this.getERC3009Signature(
+          requestUrl,
+          payTo,
+          amount,
+          validUntil,
+          validAfter,
+        ).andThen((signed: ISignedERC3009TransferWithAuthorization) => {
+          const paymentPayload: X402PaymentPayloadV2ExactEvm = {
+            x402Version:
+              typeof req.x402Version === "number" ? req.x402Version : 2,
+            resource: {
+              url: (req.resource?.url ?? requestUrl) as unknown as string,
+              ...(req.resource?.description
+                ? { description: req.resource.description }
+                : {}),
+              ...(req.resource?.mimeType
+                ? { mimeType: req.resource.mimeType }
+                : {}),
             },
-          },
-        };
+            accepted: {
+              scheme: "exact",
+              network,
+              amount,
+              asset,
+              payTo,
+              maxTimeoutSeconds,
+              ...(Object.keys(extra).length ? { extra } : {}),
+            },
+            payload: {
+              signature: signed.signature,
+              authorization: {
+                from: signed.from,
+                to: signed.to,
+                value: signed.value,
+                validAfter: signed.validAfter,
+                validBefore: signed.validBefore,
+                nonce: signed.nonce,
+              },
+            },
+          };
 
-        const encoded = x402Base64EncodeUtf8(JSON.stringify(paymentPayload));
-        const headersOverride = new Headers();
-        headersOverride.set("PAYMENT-SIGNATURE", encoded);
+          const encoded = x402Base64EncodeUtf8(JSON.stringify(paymentPayload));
+          const headersOverride = new Headers();
+          headersOverride.set("PAYMENT-SIGNATURE", encoded);
 
-        return doFetch(headersOverride);
+          return doFetch(headersOverride);
+        });
       });
     });
   }

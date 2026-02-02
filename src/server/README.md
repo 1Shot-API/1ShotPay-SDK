@@ -72,7 +72,12 @@ const address = EVMAccountAddress("0xADDRESS");
 You’ll see the same pattern for server integration primitives:
 
 ```ts
-import { DecimalAmount, PayLinkId, URLString, UserId } from "@1shotapi/1shotpay-common";
+import {
+  DecimalAmount,
+  PayLinkId,
+  URLString,
+  UserId,
+} from "@1shotapi/1shotpay-common";
 
 const userId = UserId("123e4567-e89b-12d3-a456-426614174000");
 const amount = DecimalAmount(0.01);
@@ -85,7 +90,11 @@ const mediaUrl = URLString("https://example.com/product.png");
 If you prefer `async/await` over chaining, **@1shotapi/1shotpay-common** provides `resultAsyncToPromise()` which converts a `ResultAsync<T, Error>` into a `Promise<T>` by throwing on error.
 
 ```ts
-import { DecimalAmount, UserId, resultAsyncToPromise } from "@1shotapi/1shotpay-common";
+import {
+  DecimalAmount,
+  UserId,
+  resultAsyncToPromise,
+} from "@1shotapi/1shotpay-common";
 import { OneShotPayServer } from "@1shotapi/1shotpay-server-sdk";
 
 const server = new OneShotPayServer(UserId("..."), "api-token");
@@ -204,7 +213,6 @@ server.waitForPayLinkPayment(payLinkId).match(
 
 - For HTTP APIs, it’s common to call `waitForPayLinkPayment()` in a **worker** (background job / separate process) so you can return the pay link URL immediately to the client.
 - If you need strict real-time completion, consider combining polling with server-side events or a job status endpoint in your app.
-
 
 ## Build & publish (from repo root)
 

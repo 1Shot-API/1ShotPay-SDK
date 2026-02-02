@@ -122,11 +122,30 @@ export function x402NormalizeAcceptedPayments(
     if (Array.isArray(req.paymentRequirements))
       candidates.push(...req.paymentRequirements);
   }
-  // Best-effort coercion
-  return candidates.filter(Boolean).map((c) => c as X402AcceptedPayment);
+  // Common alternative key (e.g. body uses "accepts" instead of "accepted")
+  const accepts = (req as Record<string, unknown>).accepts;
+  if (accepts != null) {
+    if (Array.isArray(accepts)) candidates.push(...accepts);
+    else candidates.push(accepts);
+  }
+  // Best-effort coercion: support maxAmountRequired -> amount
+  return candidates.filter(Boolean).map((c) => {
+    const item = c as Record<string, unknown>;
+    if (
+      item &&
+      typeof item === "object" &&
+      item.maxAmountRequired != null &&
+      item.amount == null
+    ) {
+      item.amount = item.maxAmountRequired;
+    }
+    return item as X402AcceptedPayment;
+  });
 }
 
 export function x402GetChainIdFromNetwork(network: string): number | null {
+  const normalized = (network ?? "").trim().toLowerCase();
+  if (normalized === "base" || normalized === "base-mainnet") return 8453;
   // Expected: eip155:<chainId>
   const m = /^eip155:(\d+)$/.exec(network);
   if (!m) return null;
