@@ -2,6 +2,7 @@
 import { defineConfig } from "vite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import swc from "unplugin-swc";
 
 // Get base path from environment variable, default to '/' for local dev
 // For GitHub Pages, set VITE_BASE_PATH to your repository name (e.g., '/1shotpay-sdk/')
@@ -11,6 +12,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   base,
   root: "./src/test",
+  plugins: [
+    // Transpile TypeScript with decorators (e.g. @injectable in common/utils/TimeUtils)
+    swc.vite({ tsconfigFile: path.resolve(__dirname, "tsconfig.json") }),
+  ],
   // Resolve workspace packages to source for local dev (no need to rebuild between changes).
   // Common uses bare "types/" and "utils/" internally; alias them for bundling.
   resolve: {
