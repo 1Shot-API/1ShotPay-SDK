@@ -8,7 +8,7 @@ This repository is a Yarn workspace containing the 1ShotPay client SDK, server S
 | **@1shotapi/1shotpay-client-sdk** | Browser SDK for embedding the 1ShotPay passkey wallet in your site |
 | **@1shotapi/1shotpay-server-sdk** | Server-side SDK for 1ShotPay API integration                       |
 
-- **Live demo (Client SDK)**: `https://1shot-api.github.io/1shotpay-sdk/`
+- **Live demo (Client SDK)**: `https://1shot-api.github.io/1ShotPay-SDK/`
 
 ## Install
 
