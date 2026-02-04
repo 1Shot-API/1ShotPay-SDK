@@ -20,6 +20,13 @@ const toggleFrameBtn = document.getElementById(
 const x402UrlInput = document.getElementById(
   "x402UrlInput",
 ) as HTMLInputElement;
+const x402VerbSelect = document.getElementById(
+  "x402VerbSelect",
+) as HTMLSelectElement;
+const x402BodyRow = document.getElementById("x402BodyRow");
+const x402BodyInput = document.getElementById(
+  "x402BodyInput",
+) as HTMLTextAreaElement;
 const x402RequestBtn = document.getElementById(
   "x402RequestBtn",
 ) as HTMLButtonElement;
@@ -31,6 +38,9 @@ if (
   !getSignatureBtn ||
   !toggleFrameBtn ||
   !x402UrlInput ||
+  !x402VerbSelect ||
+  !x402BodyRow ||
+  !x402BodyInput ||
   !x402RequestBtn
 ) {
   throw new Error("Required elements not found");
@@ -139,6 +149,17 @@ toggleFrameBtn.addEventListener("click", () => {
   }
 });
 
+// Show/hide JSON body input when verb is POST or PUT
+function updateX402BodyVisibility() {
+  const verb = (x402VerbSelect.value || "GET").toUpperCase();
+  if (x402BodyRow) {
+    x402BodyRow.style.display =
+      verb === "POST" || verb === "PUT" ? "block" : "none";
+  }
+}
+x402VerbSelect.addEventListener("change", updateX402BodyVisibility);
+updateX402BodyVisibility();
+
 // x402 request handler
 x402RequestBtn.addEventListener("click", () => {
   const url = (x402UrlInput.value || "").trim();
@@ -147,10 +168,31 @@ x402RequestBtn.addEventListener("click", () => {
     return;
   }
 
-  x402RequestBtn.disabled = true;
-  addStatusMessage(`x402Fetch: ${url}`);
+  const method = (x402VerbSelect.value || "GET").toUpperCase() as
+    | "GET"
+    | "POST"
+    | "PUT"
+    | "DELETE";
 
-  oneShotPay.x402Fetch(url, { method: "GET" }).match(
+  let init: RequestInit = { method };
+
+  if (method === "POST" || method === "PUT") {
+    const rawBody = (x402BodyInput.value || "{}").trim();
+    let body: string;
+    try {
+      const parsed = JSON.parse(rawBody || "{}");
+      body = JSON.stringify(parsed);
+    } catch {
+      addStatusMessage("Invalid JSON in body. Using {} or fix the JSON.", true);
+      body = "{}";
+    }
+    init = { ...init, body, headers: { "Content-Type": "application/json" } };
+  }
+
+  x402RequestBtn.disabled = true;
+  addStatusMessage(`x402Fetch ${method}: ${url}`);
+
+  oneShotPay.x402Fetch(url, init).match(
     async (res) => {
       const contentType = res.headers.get("content-type") ?? "";
       let body: string;

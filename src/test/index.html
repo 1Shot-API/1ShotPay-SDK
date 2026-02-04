@@ -39,6 +39,9 @@
         background: #f9f9f9;
         resize: vertical;
       }
+      .x402-section {
+        margin: 10px 0;
+      }
       .x402-row {
         display: flex;
         gap: 8px;
@@ -51,6 +54,34 @@
         font-size: 14px;
         border: 1px solid #ccc;
         border-radius: 4px;
+      }
+      #x402VerbSelect {
+        padding: 10px 12px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: white;
+        min-width: 100px;
+      }
+      .x402-body-row {
+        margin-top: 8px;
+      }
+      .x402-body-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 4px;
+        color: #555;
+      }
+      .x402-body-input {
+        width: 100%;
+        padding: 10px 12px;
+        font-family: monospace;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: vertical;
+        box-sizing: border-box;
       }
       .indicators {
         display: flex;
@@ -145,9 +176,21 @@
       <button id="toggleFrameBtn" disabled>Toggle Frame</button>
     </div>
 
-    <div class="x402-row">
-      <input id="x402UrlInput" type="url" placeholder="x402 URL (https://...)" />
-      <button id="x402RequestBtn" disabled>Request</button>
+    <div class="x402-section">
+      <div class="x402-row">
+        <input id="x402UrlInput" type="url" placeholder="x402 URL (https://...)" />
+        <select id="x402VerbSelect" title="HTTP method">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+        <button id="x402RequestBtn" disabled>Request</button>
+      </div>
+      <div id="x402BodyRow" class="x402-body-row" style="display: none;">
+        <label for="x402BodyInput" class="x402-body-label">JSON body</label>
+        <textarea id="x402BodyInput" class="x402-body-input" rows="4" placeholder="{}">{}</textarea>
+      </div>
     </div>
 
     <div id="Wallet"></div>
