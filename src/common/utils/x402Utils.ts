@@ -32,22 +32,10 @@ export type X402AcceptedPayment = {
   extra?: Record<string, unknown>;
 };
 
-export type X402PaymentPayloadV2ExactEvm = {
+export type X402PaymentPayloadV1ExactEvm = {
   x402Version: number;
-  resource: {
-    url: string;
-    description?: string;
-    mimeType?: string;
-  };
-  accepted: {
-    scheme: "exact";
-    network: string;
-    amount: BigNumberString;
-    asset: EVMContractAddress;
-    payTo: EVMAccountAddress;
-    maxTimeoutSeconds?: number;
-    extra?: Record<string, unknown>;
-  };
+  scheme: "exact";
+  network: "base";
   payload: {
     signature: Signature;
     authorization: IERC3009TransferWithAuthorization;

@@ -11,7 +11,6 @@ import {
   UnixTimestamp,
   Username,
   ELocale,
-  X402PaymentPayloadV2ExactEvm,
   X402PaymentRequirements,
   x402Base64EncodeUtf8,
   x402GetChainIdFromNetwork,
@@ -19,6 +18,7 @@ import {
   x402NormalizeAcceptedPayments,
   x402ParseJsonOrBase64Json,
   x402ResolveRequestUrl,
+  X402PaymentPayloadV1ExactEvm,
 } from "@1shotapi/1shotpay-common";
 import Postmate from "@1shotapi/postmate";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -465,29 +465,12 @@ export class OneShotPayClient implements IOneShotPayClient {
           validUntil,
           validAfter,
         ).andThen((signed: ISignedERC3009TransferWithAuthorization) => {
-          const paymentPayload: X402PaymentPayloadV2ExactEvm = {
+          const xPaymentObject = {
             x402Version:
-              typeof req.x402Version === "number" ? req.x402Version : 2,
-            resource: {
-              url: (req.resource?.url ?? requestUrl) as unknown as string,
-              ...(req.resource?.description
-                ? { description: req.resource.description }
-                : {}),
-              ...(req.resource?.mimeType
-                ? { mimeType: req.resource.mimeType }
-                : {}),
-            },
-            accepted: {
-              scheme: "exact",
-              network,
-              amount,
-              asset,
-              payTo,
-              maxTimeoutSeconds,
-              ...(Object.keys(extra).length ? { extra } : {}),
-            },
+              typeof req.x402Version === "number" ? req.x402Version : 1,
+            scheme: "exact" as const,
+            network: "base" as const,
             payload: {
-              signature: signed.signature,
               authorization: {
                 from: signed.from,
                 to: signed.to,
@@ -496,12 +479,13 @@ export class OneShotPayClient implements IOneShotPayClient {
                 validBefore: signed.validBefore,
                 nonce: signed.nonce,
               },
+              signature: signed.signature,
             },
-          };
+          } satisfies X402PaymentPayloadV1ExactEvm;
 
-          const encoded = x402Base64EncodeUtf8(JSON.stringify(paymentPayload));
+          const encoded = x402Base64EncodeUtf8(JSON.stringify(xPaymentObject));
           const headersOverride = new Headers();
-          headersOverride.set("PAYMENT-SIGNATURE", encoded);
+          headersOverride.set("X-PAYMENT", encoded);
 
           return doFetch(headersOverride);
         });
