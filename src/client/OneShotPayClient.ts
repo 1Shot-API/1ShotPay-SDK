@@ -16,7 +16,6 @@ import {
   x402GetChainIdFromNetwork,
   x402IsUsdcOnBase,
   x402NormalizeAcceptedPayments,
-  x402ParseJsonOrBase64Json,
   x402ResolveRequestUrl,
   X402PaymentPayloadV1ExactEvm,
 } from "@1shotapi/1shotpay-common";
@@ -174,7 +173,8 @@ export class OneShotPayClient implements IOneShotPayClient {
     validAfter: UnixTimestamp,
   ): ResultAsync<ISignedERC3009TransferWithAuthorization, ProxyError> {
     return this.rpcCall<
-      ISignedERC3009TransferWithAuthorization,
+      | ISignedERC3009TransferWithAuthorization
+      | { transfer?: ISignedERC3009TransferWithAuthorization },
       IGetERC3009SignatureParams
     >(
       "getERC3009Signature",
@@ -186,7 +186,19 @@ export class OneShotPayClient implements IOneShotPayClient {
         validAfter,
       } satisfies IGetERC3009SignatureParams,
       true, // requireInteraction: display iframe for user interaction
-    );
+    ).map((result) => {
+      const wrapped = result as {
+        transfer?: ISignedERC3009TransferWithAuthorization;
+      };
+      if (
+        wrapped != null &&
+        typeof wrapped === "object" &&
+        wrapped.transfer != null
+      ) {
+        return wrapped.transfer;
+      }
+      return result as ISignedERC3009TransferWithAuthorization;
+    });
   }
 
   public getPermitSignature(
@@ -337,26 +349,8 @@ export class OneShotPayClient implements IOneShotPayClient {
         return okAsync(initialResponse);
       }
 
-      const paymentRequiredHeader =
-        initialResponse.headers.get("payment-required") ??
-        initialResponse.headers.get("PAYMENT-REQUIRED");
-
-      const getReq = (): ResultAsync<X402PaymentRequirements, AjaxError> => {
-        if (paymentRequiredHeader) {
-          try {
-            const parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
-            return okAsync(parsed as X402PaymentRequirements);
-          } catch (e) {
-            return errAsync(
-              new AjaxError(
-                new Error(
-                  `Failed to parse PAYMENT-REQUIRED header for x402: ${(e as Error).message}`,
-                ),
-              ),
-            );
-          }
-        }
-        return ResultAsync.fromPromise(initialResponse.json(), (e) =>
+      const getReq = (): ResultAsync<X402PaymentRequirements, AjaxError> =>
+        ResultAsync.fromPromise(initialResponse.json(), (e) =>
           AjaxError.fromError(e as Error),
         ).andThen((body) => {
           if (
@@ -369,12 +363,11 @@ export class OneShotPayClient implements IOneShotPayClient {
           return errAsync(
             new AjaxError(
               new Error(
-                "Received HTTP 402 but missing PAYMENT-REQUIRED header and body is not x402 JSON.",
+                "Received HTTP 402 but body is not x402 JSON (expected x402Version, accepts, or accepted).",
               ),
             ),
           );
         });
-      };
 
       return getReq().andThen((req) => {
         const accepted = x402NormalizeAcceptedPayments(req);
@@ -401,7 +394,7 @@ export class OneShotPayClient implements IOneShotPayClient {
           return errAsync(
             new AjaxError(
               new Error(
-                "x402 PAYMENT-REQUIRED header missing one of: network, amount, asset, payTo.",
+                "x402 payment requirements missing one of: network, amount, asset, payTo.",
               ),
             ),
           );
@@ -464,7 +457,7 @@ export class OneShotPayClient implements IOneShotPayClient {
           amount,
           validUntil,
           validAfter,
-        ).andThen((signed: ISignedERC3009TransferWithAuthorization) => {
+        ).andThen((signed) => {
           const xPaymentObject = {
             x402Version:
               typeof req.x402Version === "number" ? req.x402Version : 1,
