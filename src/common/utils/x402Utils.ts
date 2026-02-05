@@ -32,13 +32,24 @@ export type X402AcceptedPayment = {
   extra?: Record<string, unknown>;
 };
 
+/**
+ * Same as T but with validAfter and validBefore as string (e.g. for JSON payloads).
+ * Use for types that extend IERC3009TransferWithAuthorization when serializing.
+ */
+export type WithStringTimestamps<
+  T extends { validAfter: unknown; validBefore: unknown },
+> = Omit<T, "validAfter" | "validBefore"> & {
+  validAfter: string;
+  validBefore: string;
+};
+
 export type X402PaymentPayloadV1ExactEvm = {
   x402Version: number;
   scheme: "exact";
   network: "base";
   payload: {
     signature: Signature;
-    authorization: IERC3009TransferWithAuthorization;
+    authorization: WithStringTimestamps<IERC3009TransferWithAuthorization>;
   };
 };
 
