@@ -32,6 +32,12 @@ const x402BodyInput = document.getElementById(
 const x402RequestBtn = document.getElementById(
   "x402RequestBtn",
 ) as HTMLButtonElement;
+const x402ResponseSection = document.getElementById("x402ResponseSection");
+const x402ResponseTextContainer = document.getElementById(
+  "x402ResponseTextContainer",
+);
+const x402ResponseText = document.getElementById("x402ResponseText");
+const x402ResponseCopyBtn = document.getElementById("x402ResponseCopyBtn");
 
 if (
   !statusTextarea ||
@@ -125,6 +131,8 @@ const modalBackdrop = document.getElementById("modal-backdrop");
 const modalSignature = document.getElementById("modal-signature");
 const modalSignatureJsonContent = document.getElementById("modal-signature-json-content");
 const modalSignatureJson = document.getElementById("modal-signature-json");
+const modalX402Image = document.getElementById("modal-x402-image");
+const modalX402ImageContent = document.getElementById("modal-x402-image-content") as HTMLImageElement | null;
 const modalAccount = document.getElementById("modal-account");
 const modalAccountImage = document.getElementById("modal-account-image") as HTMLImageElement | null;
 const modalAccountInitials = document.getElementById("modal-account-initials");
@@ -142,18 +150,26 @@ function getInitials(username: string | undefined, address: string): string {
   return address.slice(2, 4).toUpperCase() || "0x";
 }
 
+let x402ImageObjectUrl: string | null = null;
+
 function closeModals() {
   modalBackdrop?.classList.add("opacity-0");
   setTimeout(() => {
     modalBackdrop?.classList.add("hidden");
     modalSignature?.classList.add("hidden");
+    modalX402Image?.classList.add("hidden");
     modalAccount?.classList.add("hidden");
+    if (x402ImageObjectUrl) {
+      URL.revokeObjectURL(x402ImageObjectUrl);
+      x402ImageObjectUrl = null;
+    }
   }, 300);
 }
 
 function showAccountModal(userOrAddress: { username?: string; accountAddress: string; profileText?: string | null; profileImageUrl?: string | null } | string) {
   if (!modalBackdrop || !modalAccount || !modalAccountAddressText) return;
   modalSignature?.classList.add("hidden");
+  modalX402Image?.classList.add("hidden");
 
   const address = typeof userOrAddress === "string" ? userOrAddress : userOrAddress.accountAddress;
   const username = typeof userOrAddress === "string" ? undefined : userOrAddress.username;
@@ -199,6 +215,7 @@ function showAccountModal(userOrAddress: { username?: string; accountAddress: st
 
 function showSignatureModal(payload: object) {
   if (!modalBackdrop || !modalSignature || !modalSignatureJsonContent || !modalSignatureJson) return;
+  modalX402Image?.classList.add("hidden");
   const jsonStr = JSON.stringify(payload, null, 2);
   modalSignatureJsonContent.textContent = jsonStr;
   modalSignatureJson.dataset.json = jsonStr;
@@ -223,6 +240,7 @@ modalBackdrop?.addEventListener("click", (e) => {
 document.getElementById("modal-account-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-signature-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-signature-close-btn")?.addEventListener("click", closeModals);
+document.getElementById("modal-x402-image-close")?.addEventListener("click", closeModals);
 modalSignatureJson?.addEventListener("click", copySignatureJson);
 document.getElementById("modal-signature-copy-btn")?.addEventListener("click", copySignatureJson);
 modalAccountAddress?.addEventListener("click", () => {
@@ -280,6 +298,16 @@ function updateX402BodyVisibility() {
 x402VerbSelect.addEventListener("change", updateX402BodyVisibility);
 updateX402BodyVisibility();
 
+function copyX402ResponseText() {
+  const text = x402ResponseText?.dataset.copyText;
+  if (text) {
+    void navigator.clipboard.writeText(text);
+    addStatusMessage("Response copied to clipboard.");
+  }
+}
+x402ResponseTextContainer?.addEventListener("click", copyX402ResponseText);
+x402ResponseCopyBtn?.addEventListener("click", copyX402ResponseText);
+
 // x402 request handler
 x402RequestBtn.addEventListener("click", () => {
   const url = (x402UrlInput.value || "").trim();
@@ -314,32 +342,71 @@ x402RequestBtn.addEventListener("click", () => {
 
   oneShotPay.x402Fetch(url, init).match(
     async (res) => {
-      const contentType = res.headers.get("content-type") ?? "";
-      let body: string;
-      try {
-        body = await res.text();
-      } catch (e) {
-        body = `(failed to read body: ${(e as Error).message})`;
-      }
+      const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
 
       addStatusMessage(
         `x402Fetch response status: ${res.status} ${res.statusText}`,
       );
 
-      if (contentType.includes("application/json")) {
+      const isImage = contentType.includes("image/");
+
+      if (isImage) {
         try {
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          x402ImageObjectUrl = objectUrl;
+          if (modalX402ImageContent) {
+            modalX402ImageContent.src = objectUrl;
+          }
+          modalAccount?.classList.add("hidden");
+          modalSignature?.classList.add("hidden");
+          modalBackdrop?.classList.remove("hidden");
+          modalBackdrop?.classList.remove("opacity-0");
+          modalX402Image?.classList.remove("hidden");
+          (window as unknown as { lucide?: { createIcons: () => void } })
+            .lucide?.createIcons?.();
+          addStatusMessage(`Response: image (${contentType.split(";")[0]})`);
+        } catch (e) {
           addStatusMessage(
-            `x402Fetch response body (json): ${JSON.stringify(
-              JSON.parse(body),
-              null,
-              2,
-            )}`,
+            `Failed to read image: ${(e as Error).message}`,
+            true,
           );
-        } catch {
-          addStatusMessage(`x402Fetch response body: ${body}`);
         }
       } else {
-        addStatusMessage(`x402Fetch response body: ${body}`);
+        // Show inline response section for text/JSON
+        x402ResponseSection?.classList.remove("hidden");
+        x402ResponseTextContainer?.classList.add("hidden");
+        x402ResponseCopyBtn?.classList.add("hidden");
+        let body: string;
+        try {
+          body = await res.text();
+        } catch (e) {
+          body = `(failed to read body: ${(e as Error).message})`;
+        }
+
+        const displayText =
+          contentType.includes("application/json") && body
+            ? (() => {
+                try {
+                  return JSON.stringify(JSON.parse(body), null, 2);
+                } catch {
+                  return body;
+                }
+              })()
+            : body;
+
+        if (x402ResponseText) {
+          x402ResponseText.textContent = displayText;
+          x402ResponseText.dataset.copyText = displayText;
+        }
+        x402ResponseTextContainer?.classList.remove("hidden");
+        x402ResponseCopyBtn?.classList.remove("hidden");
+        (window as unknown as { lucide?: { createIcons: () => void } })
+          .lucide?.createIcons?.();
+
+        addStatusMessage(
+          `Response: ${contentType.includes("application/json") ? "JSON" : "text"}`,
+        );
       }
 
       x402RequestBtn.disabled = false;
