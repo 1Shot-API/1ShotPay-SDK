@@ -37,7 +37,7 @@ jobs:
         run: yarn build:test:gh-pages
         env:
           # Must match the repo name exactly (GitHub Pages URLs are case-sensitive)
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BASE_PATH: /
 
       - name: List build output
         run: |
