@@ -14,6 +14,9 @@ const statusIndicator = document.getElementById("statusIndicator");
 const getSignatureBtn = document.getElementById(
   "getSignatureBtn",
 ) as HTMLButtonElement;
+const getAccountAddressBtn = document.getElementById(
+  "getAccountAddressBtn",
+) as HTMLButtonElement;
 const toggleFrameBtn = document.getElementById(
   "toggleFrameBtn",
 ) as HTMLButtonElement;
@@ -36,6 +39,7 @@ if (
   !initIndicator ||
   !statusIndicator ||
   !getSignatureBtn ||
+  !getAccountAddressBtn ||
   !toggleFrameBtn ||
   !x402UrlInput ||
   !x402VerbSelect ||
@@ -101,6 +105,7 @@ oneShotPay
 
     // Enable the buttons now that initialization is complete
     getSignatureBtn.disabled = false;
+    getAccountAddressBtn.disabled = false;
     toggleFrameBtn.disabled = false;
     x402RequestBtn.disabled = false;
     addStatusMessage("Ready! Click the button to get ERC3009 signature.");
@@ -136,6 +141,21 @@ getSignatureBtn.addEventListener("click", () => {
       console.error("Signature error:", error);
       getSignatureBtn.disabled = false;
     });
+});
+
+// Get account address button handler
+getAccountAddressBtn.addEventListener("click", () => {
+  addStatusMessage("Calling getAccountAddress()...");
+  oneShotPay.getAccountAddress().match(
+    (address) => {
+      console.log("Account address:", address);
+      addStatusMessage(`Account address: ${address} (see console)`);
+    },
+    (err) => {
+      addStatusMessage(`getAccountAddress error: ${err.message}`, true);
+      console.error("getAccountAddress error:", err);
+    },
+  );
 });
 
 // Toggle frame button handler
