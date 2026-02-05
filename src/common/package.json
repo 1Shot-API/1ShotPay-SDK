@@ -1,6 +1,6 @@
 {
   "name": "@1shotapi/1shotpay-common",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Shared types and utilities for 1ShotPay client and server SDKs",
   "type": "module",
   "main": "./dist/index.js",

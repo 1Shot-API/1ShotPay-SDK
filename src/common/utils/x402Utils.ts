@@ -53,6 +53,29 @@ export type X402PaymentPayloadV1ExactEvm = {
   };
 };
 
+/** x402 v2 X-PAYMENT payload (exact scheme, EVM). */
+export type X402PaymentPayloadV2ExactEvm = {
+  x402Version: 2;
+  accepted: {
+    scheme: "exact";
+    network: string;
+    asset: EVMContractAddress;
+    amount: BigNumberString;
+    payTo: EVMAccountAddress;
+    maxTimeoutSeconds?: number;
+    extra?: Record<string, unknown>;
+  };
+  payload: {
+    signature: Signature;
+    authorization: WithStringTimestamps<IERC3009TransferWithAuthorization>;
+  };
+  resource: {
+    url: string;
+    description?: string;
+    mimeType?: string;
+  };
+};
+
 export function x402ResolveRequestUrl(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
   if (input instanceof URL) return input.toString();
