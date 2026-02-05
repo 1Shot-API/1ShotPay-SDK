@@ -465,14 +465,14 @@ export class OneShotPayClient implements IOneShotPayClient {
             network: "base" as const,
             payload: {
               authorization: {
-                from: signed.from,
-                to: signed.to,
-                value: signed.value,
-                validAfter: signed.validAfter,
-                validBefore: signed.validBefore,
-                nonce: signed.nonce,
+                from: signed.from.toString(),
+                to: signed.to.toString(),
+                value: signed.value.toString(),
+                validAfter: signed.validAfter.toString(),
+                validBefore: signed.validBefore.toString(),
+                nonce: signed.nonce.toString(),
               },
-              signature: signed.signature,
+              signature: signed.signature.toString(),
             },
           } satisfies X402PaymentPayloadV1ExactEvm;
 
