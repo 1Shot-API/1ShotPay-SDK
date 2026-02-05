@@ -18,6 +18,7 @@ import {
   x402NormalizeAcceptedPayments,
   x402ResolveRequestUrl,
   X402PaymentPayloadV1ExactEvm,
+  X402PaymentPayloadV2ExactEvm,
 } from "@1shotapi/1shotpay-common";
 import Postmate from "@1shotapi/postmate";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -458,23 +459,47 @@ export class OneShotPayClient implements IOneShotPayClient {
           validUntil,
           validAfter,
         ).andThen((signed) => {
-          const xPaymentObject = {
-            x402Version:
-              typeof req.x402Version === "number" ? req.x402Version : 1,
-            scheme: "exact" as const,
-            network: "base" as const,
-            payload: {
-              authorization: {
-                from: signed.from,
-                to: signed.to,
-                value: signed.value,
-                validAfter: signed.validAfter.toString(),
-                validBefore: signed.validBefore.toString(),
-                nonce: signed.nonce,
-              },
-              signature: signed.signature,
-            },
-          } satisfies X402PaymentPayloadV1ExactEvm;
+          const authorization = {
+            from: signed.from,
+            to: signed.to,
+            value: signed.value,
+            validAfter: signed.validAfter.toString(),
+            validBefore: signed.validBefore.toString(),
+            nonce: signed.nonce,
+          };
+          const payload = { signature: signed.signature, authorization };
+
+          const isV2 = req.x402Version === 2;
+          const xPaymentObject = isV2
+            ? ({
+                x402Version: 2 as const,
+                accepted: {
+                  scheme: "exact" as const,
+                  network: `eip155:${chainId}`,
+                  asset,
+                  amount,
+                  payTo,
+                  maxTimeoutSeconds,
+                  ...(Object.keys(extra).length ? { extra } : {}),
+                },
+                payload,
+                resource: {
+                  url: (req.resource?.url ?? requestUrl) as string,
+                  ...(req.resource?.description
+                    ? { description: req.resource.description }
+                    : {}),
+                  ...(req.resource?.mimeType
+                    ? { mimeType: req.resource.mimeType }
+                    : {}),
+                },
+              } satisfies X402PaymentPayloadV2ExactEvm)
+            : ({
+                x402Version:
+                  typeof req.x402Version === "number" ? req.x402Version : 1,
+                scheme: "exact" as const,
+                network: "base" as const,
+                payload,
+              } satisfies X402PaymentPayloadV1ExactEvm);
 
           const encoded = x402Base64EncodeUtf8(JSON.stringify(xPaymentObject));
           const headersOverride = new Headers();
