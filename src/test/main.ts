@@ -22,6 +22,7 @@ const toggleFrameBtn = document.getElementById(
 const x402UrlInput = document.getElementById(
   "x402UrlInput",
 ) as HTMLInputElement;
+const x402UrlError = document.getElementById("x402UrlError");
 const x402VerbSelect = document.getElementById(
   "x402VerbSelect",
 ) as HTMLSelectElement;
@@ -131,6 +132,9 @@ const modalBackdrop = document.getElementById("modal-backdrop");
 const modalSignature = document.getElementById("modal-signature");
 const modalSignatureJsonContent = document.getElementById("modal-signature-json-content");
 const modalSignatureJson = document.getElementById("modal-signature-json");
+const modalX402Json = document.getElementById("modal-x402-json");
+const modalX402JsonText = document.getElementById("modal-x402-json-text");
+const modalX402JsonContent = document.getElementById("modal-x402-json-content");
 const modalX402Image = document.getElementById("modal-x402-image");
 const modalX402ImageContent = document.getElementById("modal-x402-image-content") as HTMLImageElement | null;
 const modalAccount = document.getElementById("modal-account");
@@ -157,6 +161,7 @@ function closeModals() {
   setTimeout(() => {
     modalBackdrop?.classList.add("hidden");
     modalSignature?.classList.add("hidden");
+    modalX402Json?.classList.add("hidden");
     modalX402Image?.classList.add("hidden");
     modalAccount?.classList.add("hidden");
     if (x402ImageObjectUrl) {
@@ -169,6 +174,7 @@ function closeModals() {
 function showAccountModal(userOrAddress: { username?: string; accountAddress: string; profileText?: string | null; profileImageUrl?: string | null } | string) {
   if (!modalBackdrop || !modalAccount || !modalAccountAddressText) return;
   modalSignature?.classList.add("hidden");
+  modalX402Json?.classList.add("hidden");
   modalX402Image?.classList.add("hidden");
 
   const address = typeof userOrAddress === "string" ? userOrAddress : userOrAddress.accountAddress;
@@ -215,6 +221,7 @@ function showAccountModal(userOrAddress: { username?: string; accountAddress: st
 
 function showSignatureModal(payload: object) {
   if (!modalBackdrop || !modalSignature || !modalSignatureJsonContent || !modalSignatureJson) return;
+  modalX402Json?.classList.add("hidden");
   modalX402Image?.classList.add("hidden");
   const jsonStr = JSON.stringify(payload, null, 2);
   modalSignatureJsonContent.textContent = jsonStr;
@@ -241,6 +248,17 @@ document.getElementById("modal-account-close")?.addEventListener("click", closeM
 document.getElementById("modal-signature-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-signature-close-btn")?.addEventListener("click", closeModals);
 document.getElementById("modal-x402-image-close")?.addEventListener("click", closeModals);
+document.getElementById("modal-x402-json-close")?.addEventListener("click", closeModals);
+document.getElementById("modal-x402-json-close-btn")?.addEventListener("click", closeModals);
+function copyX402JsonModal() {
+  const text = modalX402JsonText?.dataset.copyText;
+  if (text) {
+    void navigator.clipboard.writeText(text);
+    addStatusMessage("Response copied to clipboard.");
+  }
+}
+document.getElementById("modal-x402-json-copy-btn")?.addEventListener("click", copyX402JsonModal);
+modalX402JsonContent?.addEventListener("click", copyX402JsonModal);
 modalSignatureJson?.addEventListener("click", copySignatureJson);
 document.getElementById("modal-signature-copy-btn")?.addEventListener("click", copySignatureJson);
 modalAccountAddress?.addEventListener("click", () => {
@@ -298,6 +316,35 @@ function updateX402BodyVisibility() {
 x402VerbSelect.addEventListener("change", updateX402BodyVisibility);
 updateX402BodyVisibility();
 
+function isValidHttpUrl(str: string): boolean {
+  const s = str.trim();
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function validateX402Url(): boolean {
+  const url = (x402UrlInput.value ?? "").trim();
+  const valid = !url || isValidHttpUrl(url);
+  if (x402UrlError) {
+    if (valid) {
+      x402UrlError.classList.add("hidden");
+      x402UrlInput.classList.remove("border-red-400", "focus:ring-red-400", "focus:border-red-400");
+    } else {
+      x402UrlError.classList.remove("hidden");
+      x402UrlInput.classList.add("border-red-400", "focus:ring-red-400", "focus:border-red-400");
+    }
+  }
+  return valid;
+}
+
+x402UrlInput.addEventListener("input", validateX402Url);
+x402UrlInput.addEventListener("blur", validateX402Url);
+
 function copyX402ResponseText() {
   const text = x402ResponseText?.dataset.copyText;
   if (text) {
@@ -313,6 +360,12 @@ x402RequestBtn.addEventListener("click", () => {
   const url = (x402UrlInput.value || "").trim();
   if (!url) {
     addStatusMessage("Please enter an x402 URL.", true);
+    validateX402Url();
+    return;
+  }
+  if (!isValidHttpUrl(url)) {
+    addStatusMessage("Please enter a valid URL (e.g. https://...).", true);
+    validateX402Url();
     return;
   }
 
@@ -373,10 +426,6 @@ x402RequestBtn.addEventListener("click", () => {
           );
         }
       } else {
-        // Show inline response section for text/JSON
-        x402ResponseSection?.classList.remove("hidden");
-        x402ResponseTextContainer?.classList.add("hidden");
-        x402ResponseCopyBtn?.classList.add("hidden");
         let body: string;
         try {
           body = await res.text();
@@ -395,14 +444,18 @@ x402RequestBtn.addEventListener("click", () => {
               })()
             : body;
 
-        if (x402ResponseText) {
-          x402ResponseText.textContent = displayText;
-          x402ResponseText.dataset.copyText = displayText;
+        if (modalX402JsonText && modalX402Json) {
+          modalX402JsonText.textContent = displayText;
+          modalX402JsonText.dataset.copyText = displayText;
+          modalAccount?.classList.add("hidden");
+          modalSignature?.classList.add("hidden");
+          modalX402Image?.classList.add("hidden");
+          modalBackdrop?.classList.remove("hidden");
+          modalBackdrop?.classList.remove("opacity-0");
+          modalX402Json.classList.remove("hidden");
+          (window as unknown as { lucide?: { createIcons: () => void } })
+            .lucide?.createIcons?.();
         }
-        x402ResponseTextContainer?.classList.remove("hidden");
-        x402ResponseCopyBtn?.classList.remove("hidden");
-        (window as unknown as { lucide?: { createIcons: () => void } })
-          .lucide?.createIcons?.();
 
         addStatusMessage(
           `Response: ${contentType.includes("application/json") ? "JSON" : "text"}`,
