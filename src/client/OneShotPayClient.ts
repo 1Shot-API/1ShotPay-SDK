@@ -16,6 +16,7 @@ import {
   x402GetChainIdFromNetwork,
   x402IsUsdcOnBase,
   x402NormalizeAcceptedPayments,
+  x402ParseJsonOrBase64Json,
   x402ResolveRequestUrl,
   X402PaymentPayloadV1ExactEvm,
   X402PaymentPayloadV2ExactEvm,
@@ -350,8 +351,41 @@ export class OneShotPayClient implements IOneShotPayClient {
         return okAsync(initialResponse);
       }
 
-      const getReq = (): ResultAsync<X402PaymentRequirements, AjaxError> =>
-        ResultAsync.fromPromise(initialResponse.json(), (e) =>
+      const paymentRequiredHeader =
+        initialResponse.headers.get("Payment-Required") ??
+        initialResponse.headers.get("payment-required");
+
+      const getReq = (): ResultAsync<X402PaymentRequirements, AjaxError> => {
+        if (paymentRequiredHeader) {
+          try {
+            const parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
+            if (
+              parsed != null &&
+              typeof parsed === "object" &&
+              ("x402Version" in parsed ||
+                "accepts" in parsed ||
+                "accepted" in parsed)
+            ) {
+              return okAsync(parsed as X402PaymentRequirements);
+            }
+            return errAsync(
+              new AjaxError(
+                new Error(
+                  "Payment-Required header is not valid x402 JSON (expected x402Version, accepts, or accepted).",
+                ),
+              ),
+            );
+          } catch (e) {
+            return errAsync(
+              new AjaxError(
+                new Error(
+                  `Failed to parse Payment-Required header: ${(e as Error).message}`,
+                ),
+              ),
+            );
+          }
+        }
+        return ResultAsync.fromPromise(initialResponse.json(), (e) =>
           AjaxError.fromError(e as Error),
         ).andThen((body) => {
           if (
@@ -364,11 +398,12 @@ export class OneShotPayClient implements IOneShotPayClient {
           return errAsync(
             new AjaxError(
               new Error(
-                "Received HTTP 402 but body is not x402 JSON (expected x402Version, accepts, or accepted).",
+                "Received HTTP 402 but no Payment-Required header and body is not x402 JSON (expected x402Version, accepts, or accepted).",
               ),
             ),
           );
         });
+      };
 
       return getReq().andThen((req) => {
         const accepted = x402NormalizeAcceptedPayments(req);
