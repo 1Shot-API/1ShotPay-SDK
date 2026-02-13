@@ -8,28 +8,46 @@ import {
   URLString,
 } from "types/primitives";
 
-export type X402PaymentRequirements = {
-  // x402 v2 uses x402Version, older drafts may use version-like fields
-  x402Version?: number;
-  version?: number;
-  resource?: {
-    url?: URLString;
-    description?: string;
-    mimeType?: string;
-  };
-  // Common shapes observed across drafts:
-  accepted?: unknown; // object | array
-  paymentRequirements?: unknown; // array
+export type X402V1PaymentRequirements = {
+  x402Version: 1;
+  error: string;
+  accepts: X402V1AcceptedPayment[];
 };
 
-export type X402AcceptedPayment = {
-  scheme?: string;
-  network?: string;
-  amount?: BigNumberString;
-  asset?: EVMContractAddress;
-  payTo?: EVMAccountAddress;
-  maxTimeoutSeconds?: number;
-  extra?: Record<string, unknown>;
+export type X402V2Resource = {
+  url: URLString;
+  description: string;
+  mimeType: string;
+};
+
+export type X402V2PaymentRequirements = {
+  x402Version: 2;
+  error: string;
+  resource: X402V2Resource;
+  accepts: X402V2AcceptedPayment[];
+};
+
+export type X402V1AcceptedPayment = {
+  scheme: "exact";
+  network: string;
+  maxAmountRequired: BigNumberString;
+  asset: EVMContractAddress;
+  payTo: EVMAccountAddress;
+  resource: URLString;
+  description: string;
+  mimeType: string;
+  maxTimeoutSeconds: number;
+  extra: Record<string, string>;
+};
+
+export type X402V2AcceptedPayment = {
+  scheme: "exact";
+  network: string;
+  amount: BigNumberString;
+  asset: EVMContractAddress;
+  payTo: EVMAccountAddress;
+  maxTimeoutSeconds: number;
+  extra: Record<string, string>;
 };
 
 /**
@@ -43,7 +61,7 @@ export type WithStringTimestamps<
   validBefore: string;
 };
 
-export type X402PaymentPayloadV1ExactEvm = {
+export type X402V1PaymentPayloadExactEvm = {
   x402Version: number;
   scheme: "exact";
   network: "base";
@@ -54,26 +72,14 @@ export type X402PaymentPayloadV1ExactEvm = {
 };
 
 /** x402 v2 X-PAYMENT payload (exact scheme, EVM). */
-export type X402PaymentPayloadV2ExactEvm = {
+export type X402V2PaymentPayloadExactEvm = {
   x402Version: 2;
-  accepted: {
-    scheme: "exact";
-    network: string;
-    asset: EVMContractAddress;
-    amount: BigNumberString;
-    payTo: EVMAccountAddress;
-    maxTimeoutSeconds?: number;
-    extra?: Record<string, unknown>;
-  };
+  accepted: X402V2AcceptedPayment;
   payload: {
     signature: Signature;
     authorization: WithStringTimestamps<IERC3009TransferWithAuthorization>;
   };
-  resource: {
-    url: string;
-    description?: string;
-    mimeType?: string;
-  };
+  resource: X402V2Resource;
 };
 
 export function x402ResolveRequestUrl(input: RequestInfo | URL): string {
@@ -130,39 +136,6 @@ export function x402ParseJsonOrBase64Json(raw: string): unknown {
     const decoded = x402Base64DecodeUtf8(Base64String(unquoted));
     return JSON.parse(decoded);
   }
-}
-
-export function x402NormalizeAcceptedPayments(
-  req: X402PaymentRequirements,
-): X402AcceptedPayment[] {
-  const candidates: unknown[] = [];
-  if (req.accepted != null) {
-    if (Array.isArray(req.accepted)) candidates.push(...req.accepted);
-    else candidates.push(req.accepted);
-  }
-  if (req.paymentRequirements != null) {
-    if (Array.isArray(req.paymentRequirements))
-      candidates.push(...req.paymentRequirements);
-  }
-  // Common alternative key (e.g. body uses "accepts" instead of "accepted")
-  const accepts = (req as Record<string, unknown>).accepts;
-  if (accepts != null) {
-    if (Array.isArray(accepts)) candidates.push(...accepts);
-    else candidates.push(accepts);
-  }
-  // Best-effort coercion: support maxAmountRequired -> amount
-  return candidates.filter(Boolean).map((c) => {
-    const item = c as Record<string, unknown>;
-    if (
-      item &&
-      typeof item === "object" &&
-      item.maxAmountRequired != null &&
-      item.amount == null
-    ) {
-      item.amount = item.maxAmountRequired;
-    }
-    return item as X402AcceptedPayment;
-  });
 }
 
 export function x402GetChainIdFromNetwork(network: string): number | null {
