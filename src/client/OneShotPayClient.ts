@@ -11,15 +11,18 @@ import {
   UnixTimestamp,
   Username,
   ELocale,
-  X402PaymentRequirements,
   x402Base64EncodeUtf8,
   x402GetChainIdFromNetwork,
   x402IsUsdcOnBase,
-  x402NormalizeAcceptedPayments,
   x402ParseJsonOrBase64Json,
   x402ResolveRequestUrl,
-  X402PaymentPayloadV1ExactEvm,
-  X402PaymentPayloadV2ExactEvm,
+  X402V1PaymentPayloadExactEvm,
+  X402V2PaymentPayloadExactEvm,
+  X402V1PaymentRequirements,
+  X402V2PaymentRequirements,
+  EVMContractAddress,
+  X402V1AcceptedPayment,
+  X402V2AcceptedPayment,
 } from "@1shotapi/1shotpay-common";
 import Postmate from "@1shotapi/postmate";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -323,8 +326,12 @@ export class OneShotPayClient implements IOneShotPayClient {
    * Performs a normal fetch first. If the response is HTTP 402 and includes x402 payment requirements,
    * this method will ONLY support the `exact` scheme with USDC on Base mainnet (eip155:8453).
    *
+   * Requirements are read from the response body, or from the Payment-Required header when present.
+   * For cross-origin 402 responses, the server must send Access-Control-Expose-Headers: Payment-Required
+   * for the header to be readable; otherwise the 402 body must contain the payment requirements.
+   *
    * If supported, it requests an EIP-3009 (ERC-3009) signature from the embedded wallet and retries
-   * the request with a `PAYMENT-SIGNATURE` header containing base64(JSON(PaymentPayload)).
+   * the request with an X-PAYMENT header containing base64(JSON(payment payload)).
    */
   public x402Fetch(
     input: RequestInfo | URL,
@@ -348,201 +355,212 @@ export class OneShotPayClient implements IOneShotPayClient {
 
     return doFetch().andThen((initialResponse) => {
       if (initialResponse.status !== 402) {
+        console.log("Not a 402 response!");
         return okAsync(initialResponse);
       }
+      // We'll get the body no matter what, but we'll rely on the payment-required header first
+      return ResultAsync.fromPromise(initialResponse.json(), (e) =>
+        AjaxError.fromError(e as Error),
+      )
+        .andThen((body) => {
+          // We've got the body. Let's also see if we have the payment-required header
+          // Cross-origin: the server must send Access-Control-Expose-Headers: Payment-Required
+          // for this header to be visible; otherwise we rely on the 402 response body.
+          const paymentRequiredHeader =
+            initialResponse.headers.get("Payment-Required") ??
+            initialResponse.headers.get("payment-required");
 
-      const paymentRequiredHeader =
-        initialResponse.headers.get("Payment-Required") ??
-        initialResponse.headers.get("payment-required");
-
-      const getReq = (): ResultAsync<X402PaymentRequirements, AjaxError> => {
-        if (paymentRequiredHeader) {
-          try {
-            const parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
-            if (
-              parsed != null &&
-              typeof parsed === "object" &&
-              ("x402Version" in parsed ||
-                "accepts" in parsed ||
-                "accepted" in parsed)
-            ) {
-              return okAsync(parsed as X402PaymentRequirements);
+          if (paymentRequiredHeader) {
+            try {
+              const parsed = x402ParseJsonOrBase64Json(paymentRequiredHeader);
+              if (
+                parsed != null &&
+                typeof parsed === "object" &&
+                ("x402Version" in parsed || "accepts" in parsed)
+              ) {
+                return okAsync(
+                  parsed as
+                    | X402V1PaymentRequirements
+                    | X402V2PaymentRequirements,
+                );
+              }
+              return errAsync(
+                new AjaxError(
+                  new Error(
+                    "Payment-Required header is not valid x402 JSON (expected x402Version, accepts, or accepted).",
+                  ),
+                ),
+              );
+            } catch (e) {
+              return errAsync(
+                new AjaxError(
+                  new Error(
+                    `Failed to parse Payment-Required header: ${(e as Error).message}`,
+                  ),
+                ),
+              );
             }
-            return errAsync(
-              new AjaxError(
-                new Error(
-                  "Payment-Required header is not valid x402 JSON (expected x402Version, accepts, or accepted).",
-                ),
-              ),
-            );
-          } catch (e) {
-            return errAsync(
-              new AjaxError(
-                new Error(
-                  `Failed to parse Payment-Required header: ${(e as Error).message}`,
-                ),
-              ),
-            );
           }
-        }
-        return ResultAsync.fromPromise(initialResponse.json(), (e) =>
-          AjaxError.fromError(e as Error),
-        ).andThen((body) => {
+
           if (
             body != null &&
             typeof body === "object" &&
-            ("x402Version" in body || "accepts" in body || "accepted" in body)
+            ("x402Version" in body || "accepts" in body)
           ) {
-            return okAsync(body as X402PaymentRequirements);
+            return okAsync(
+              body as X402V1PaymentRequirements | X402V2PaymentRequirements,
+            );
           }
           return errAsync(
             new AjaxError(
               new Error(
-                "Received HTTP 402 but no Payment-Required header and body is not x402 JSON (expected x402Version, accepts, or accepted).",
+                "Received HTTP 402 but no Payment-Required header (or header not exposed by CORS) and body is not x402 JSON. For cross-origin 402, the server must either include Access-Control-Expose-Headers: Payment-Required or return the payment requirements in the response body.",
               ),
             ),
           );
-        });
-      };
-
-      return getReq().andThen((req) => {
-        const accepted = x402NormalizeAcceptedPayments(req);
-        const exact = accepted.find(
-          (p) => (p.scheme ?? "").toLowerCase() === "exact",
-        );
-
-        if (!exact) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                "x402 endpoint does not offer the Exact scheme (required).",
-              ),
-            ),
+        })
+        .andThen((paymentRequirements) => {
+          // Now, the problem is that we could be in version 1 or 2, and we need to handle both cases.
+          const exact = paymentRequirements.accepts.find(
+            (p) => (p.scheme ?? "").toLowerCase() === "exact",
           );
-        }
 
-        const network = exact.network;
-        const amount = exact.amount;
-        const asset = exact.asset;
-        const payTo = exact.payTo;
+          // If we don't have an exact payment available, we can't proceed.
 
-        if (!network || !amount || !asset || !payTo) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                "x402 payment requirements missing one of: network, amount, asset, payTo.",
+          if (!exact) {
+            return errAsync(
+              new AjaxError(
+                new Error(
+                  "x402 endpoint does not offer the Exact scheme (required).",
+                ),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        const chainId = x402GetChainIdFromNetwork(network);
-        if (chainId == null) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Unsupported x402 network "${network}". Only eip155:<chainId> is supported.`,
+          let network: string;
+          let amount: BigNumberString;
+          let asset: EVMContractAddress;
+          let payTo: EVMAccountAddress;
+
+          // Figure out the parameters based on the version.
+          if (paymentRequirements.x402Version === 1) {
+            const v1Exact = exact as X402V1AcceptedPayment;
+            if (v1Exact.network != "base") {
+              return errAsync(
+                new AjaxError(
+                  new Error("Unsupported network: " + exact.network),
+                ),
+              );
+            }
+            network = "base";
+            amount = v1Exact.maxAmountRequired;
+            asset = v1Exact.asset;
+            payTo = v1Exact.payTo;
+          } else if (paymentRequirements.x402Version === 2) {
+            const v2Exact = exact as X402V2AcceptedPayment;
+            network = v2Exact.network;
+            amount = v2Exact.amount;
+            asset = v2Exact.asset;
+            payTo = v2Exact.payTo;
+          } else {
+            return errAsync(
+              new AjaxError(
+                new Error(
+                  "Unsupported x402 version: " +
+                    (
+                      paymentRequirements as
+                        | X402V1PaymentRequirements
+                        | X402V2PaymentRequirements
+                    ).x402Version,
+                ),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        if (!x402IsUsdcOnBase(chainId, asset)) {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Unsupported x402 payment. Only USDC on Base is supported (got asset=${asset}, network=${network}).`,
+          const chainId = x402GetChainIdFromNetwork(network);
+          if (chainId == null) {
+            return errAsync(
+              new AjaxError(new Error(`Unsupported x402 network "${network}"`)),
+            );
+          }
+
+          if (!x402IsUsdcOnBase(chainId, asset)) {
+            return errAsync(
+              new AjaxError(
+                new Error(
+                  `Unsupported x402 payment. Only USDC on Base is supported (got asset=${asset}, network=${network}).`,
+                ),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        // Enforce asset transfer method (Exact + EIP-3009)
-        const extra = (exact.extra ?? {}) as Record<string, unknown>;
-        const method =
-          (extra["assetTransferMethod"] as string | undefined) ??
-          ((extra as Record<string, unknown>)["asset_transfer_method"] as
-            | string
-            | undefined);
-        if (method && method.toLowerCase() !== "eip3009") {
-          return errAsync(
-            new AjaxError(
-              new Error(
-                `Unsupported x402 assetTransferMethod "${method}". Only "eip3009" is supported.`,
-              ),
-            ),
-          );
-        }
+          // Signature validity window
+          const maxTimeoutSeconds =
+            typeof exact.maxTimeoutSeconds === "number"
+              ? exact.maxTimeoutSeconds
+              : 60;
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          const validAfter = UnixTimestamp(nowSeconds);
+          const validUntil = UnixTimestamp(nowSeconds + maxTimeoutSeconds);
 
-        // Signature validity window
-        const maxTimeoutSeconds =
-          typeof exact.maxTimeoutSeconds === "number"
-            ? exact.maxTimeoutSeconds
-            : 60;
-        const nowSeconds = Math.floor(Date.now() / 1000);
-        const validAfter = UnixTimestamp(nowSeconds);
-        const validUntil = UnixTimestamp(nowSeconds + maxTimeoutSeconds);
+          // Use request URL as "recipient" string for wallet UX
+          const requestUrl = x402ResolveRequestUrl(input);
 
-        // Use request URL as "recipient" string for wallet UX
-        const requestUrl = x402ResolveRequestUrl(input);
+          // Generate the ERC-3009 signature via the embedded wallet
+          return this.getERC3009Signature(
+            requestUrl,
+            payTo,
+            amount,
+            validUntil,
+            validAfter,
+          ).andThen((signed) => {
+            const authorization = {
+              from: signed.from,
+              to: signed.to,
+              value: signed.value,
+              validAfter: signed.validAfter.toString(),
+              validBefore: signed.validBefore.toString(),
+              nonce: signed.nonce,
+            };
+            const payload = { signature: signed.signature, authorization };
 
-        // Generate the ERC-3009 signature via the embedded wallet
-        return this.getERC3009Signature(
-          requestUrl,
-          payTo,
-          amount,
-          validUntil,
-          validAfter,
-        ).andThen((signed) => {
-          const authorization = {
-            from: signed.from,
-            to: signed.to,
-            value: signed.value,
-            validAfter: signed.validAfter.toString(),
-            validBefore: signed.validBefore.toString(),
-            nonce: signed.nonce,
-          };
-          const payload = { signature: signed.signature, authorization };
-
-          const isV2 = req.x402Version === 2;
-          const xPaymentObject = isV2
-            ? ({
-                x402Version: 2 as const,
-                accepted: {
+            const isV2 = paymentRequirements.x402Version === 2;
+            const xPaymentObject = isV2
+              ? ({
+                  x402Version: 2 as const,
+                  accepted: {
+                    scheme: "exact" as const,
+                    network: `eip155:${chainId}`,
+                    asset,
+                    amount,
+                    payTo,
+                    maxTimeoutSeconds,
+                    extra: {},
+                  },
+                  payload,
+                  resource: paymentRequirements.resource,
+                } satisfies X402V2PaymentPayloadExactEvm)
+              : ({
+                  x402Version: 1 as const,
                   scheme: "exact" as const,
-                  network: `eip155:${chainId}`,
-                  asset,
-                  amount,
-                  payTo,
-                  maxTimeoutSeconds,
-                  ...(Object.keys(extra).length ? { extra } : {}),
-                },
-                payload,
-                resource: {
-                  url: (req.resource?.url ?? requestUrl) as string,
-                  ...(req.resource?.description
-                    ? { description: req.resource.description }
-                    : {}),
-                  ...(req.resource?.mimeType
-                    ? { mimeType: req.resource.mimeType }
-                    : {}),
-                },
-              } satisfies X402PaymentPayloadV2ExactEvm)
-            : ({
-                x402Version:
-                  typeof req.x402Version === "number" ? req.x402Version : 1,
-                scheme: "exact" as const,
-                network: "base" as const,
-                payload,
-              } satisfies X402PaymentPayloadV1ExactEvm);
+                  network: "base" as const,
+                  payload,
+                } satisfies X402V1PaymentPayloadExactEvm);
 
-          const encoded = x402Base64EncodeUtf8(JSON.stringify(xPaymentObject));
-          const headersOverride = new Headers();
-          headersOverride.set("X-PAYMENT", encoded);
+            const encoded = x402Base64EncodeUtf8(
+              JSON.stringify(xPaymentObject),
+            );
+            const headersOverride = new Headers();
 
-          return doFetch(headersOverride);
+            if (isV2) {
+              headersOverride.set("PAYMENT-SIGNATURE", encoded);
+            } else {
+              headersOverride.set("X-PAYMENT", encoded);
+            }
+
+            return doFetch(headersOverride);
+          });
         });
-      });
     });
   }
 
