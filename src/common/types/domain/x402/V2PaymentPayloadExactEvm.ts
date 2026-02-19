@@ -3,10 +3,10 @@ import { z } from "zod";
 import { x402ERC3009AuthorizationSchema } from "types/domain/x402/ERC3009Authorization";
 import { x402V2AcceptedPaymentSchema } from "types/domain/x402/V2AcceptedPayment";
 import { x402V2ResourceSchema } from "types/domain/x402/V2Resource";
-import { Signature } from "types/primitives";
+import { SignatureSchema } from "types/primitives";
 
 const payloadSchema = z.object({
-  signature: z.string().transform((s) => Signature(s)),
+  signature: SignatureSchema,
   authorization: x402ERC3009AuthorizationSchema,
 });
 

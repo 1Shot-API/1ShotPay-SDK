@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { URLString } from "types/primitives";
+import { URLStringSchema } from "types/primitives";
 
 export const x402V2ResourceSchema = z.object({
-  url: z.string().transform((s) => URLString(s)),
+  url: URLStringSchema,
   description: z.string(),
   mimeType: z.string(),
 });

@@ -1,19 +1,19 @@
 import { z } from "zod";
 
 import {
-  BigNumberString,
-  EVMAccountAddress,
-  EVMContractAddress,
-  URLString,
+  BigNumberStringSchema,
+  EVMAccountAddressSchema,
+  EVMContractAddressSchema,
+  URLStringSchema,
 } from "types/primitives";
 
 export const x402V1AcceptedPaymentSchema = z.object({
   scheme: z.literal("exact"),
   network: z.string(),
-  maxAmountRequired: z.string().transform((s) => BigNumberString(s)),
-  asset: z.string().transform((s) => EVMContractAddress(s)),
-  payTo: z.string().transform((s) => EVMAccountAddress(s)),
-  resource: z.string().transform((s) => URLString(s)),
+  maxAmountRequired: BigNumberStringSchema,
+  asset: EVMContractAddressSchema,
+  payTo: EVMAccountAddressSchema,
+  resource: URLStringSchema,
   description: z.string(),
   mimeType: z.string(),
   maxTimeoutSeconds: z.number(),
