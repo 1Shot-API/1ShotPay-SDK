@@ -23,6 +23,7 @@ import {
   EVMContractAddress,
   X402V1AcceptedPayment,
   X402V2AcceptedPayment,
+  CAIP2Network,
 } from "@1shotapi/1shotpay-common";
 import Postmate from "@1shotapi/postmate";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -530,7 +531,7 @@ export class OneShotPayClient implements IOneShotPayClient {
                   x402Version: 2 as const,
                   accepted: {
                     scheme: "exact" as const,
-                    network: `eip155:${chainId}`,
+                    network: CAIP2Network(`eip155:${chainId}`),
                     asset,
                     amount,
                     payTo,
