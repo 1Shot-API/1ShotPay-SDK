@@ -2,13 +2,14 @@ import { z } from "zod";
 
 import {
   BigNumberStringSchema,
+  CAIP2NetworkSchema,
   EVMAccountAddressSchema,
   EVMContractAddressSchema,
 } from "types/primitives";
 
 export const x402V2AcceptedPaymentSchema = z.object({
   scheme: z.literal("exact"),
-  network: z.string(),
+  network: CAIP2NetworkSchema,
   amount: BigNumberStringSchema,
   asset: EVMContractAddressSchema,
   payTo: EVMAccountAddressSchema,
