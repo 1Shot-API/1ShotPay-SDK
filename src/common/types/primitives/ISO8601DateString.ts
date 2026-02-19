@@ -1,4 +1,5 @@
 import { type Brand, make } from "ts-brand";
+import { z } from "zod";
 
 /**
  * An ISO 8601 date string, in the format YYYY-MM-DDTHH:MM:SS.SSSZ
@@ -6,3 +7,9 @@ import { type Brand, make } from "ts-brand";
  */
 export type ISO8601DateString = Brand<string, "ISO8601DateString">;
 export const ISO8601DateString = make<ISO8601DateString>();
+
+/** Zod schema: ISO 8601 date string (e.g. YYYY-MM-DDTHH:MM:SS.SSSZ). */
+export const ISO8601DateStringSchema = z
+  .string()
+  .datetime({ message: "must be a valid ISO 8601 date string" })
+  .transform((s) => ISO8601DateString(s));
