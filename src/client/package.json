@@ -1,6 +1,6 @@
 {
   "name": "@1shotapi/1shotpay-client-sdk",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Client SDK for embedding the 1ShotPay passkey wallet in your site",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,7 +8,9 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
