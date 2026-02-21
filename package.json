@@ -18,7 +18,7 @@
     "build:test:gh-pages": "vite build",
     "dev": "vite",
     "server-example": "yarn workspace 1shotpay-server-example start",
-    "typecheck": "yarn workspaces foreach -At run typecheck",
+    "compile": "yarn workspaces foreach -At run typecheck",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",

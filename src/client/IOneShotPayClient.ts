@@ -8,7 +8,9 @@ import {
   ELocale,
   ISignedERC3009TransferWithAuthorization,
   ISignedPermitTransfer,
+  USDCAmount,
 } from "@1shotapi/1shotpay-common";
+import { Delegation } from "@metamask/smart-accounts-kit";
 import { ResultAsync } from "neverthrow";
 
 import { IAuthenticationResult } from "./ProxyTypes";
@@ -52,6 +54,15 @@ export interface IOneShotPayClient {
     nonce: BigNumberString,
     deadlineSeconds: number,
   ): ResultAsync<ISignedPermitTransfer, ProxyError>;
+
+  getSubscription(
+    name: string,
+    description: string,
+    destinationAddress: EVMAccountAddress,
+    amountPerDay: USDCAmount | null,
+    amountPerWeek: USDCAmount | null,
+    amountPerMonth: USDCAmount | null,
+  ): ResultAsync<Delegation, ProxyError>;
 
   signOut(): ResultAsync<void, ProxyError>;
 

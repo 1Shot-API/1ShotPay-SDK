@@ -1,6 +1,6 @@
 {
   "name": "@1shotapi/1shotpay-server-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Server SDK for 1ShotPay API integration",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,7 +8,9 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [

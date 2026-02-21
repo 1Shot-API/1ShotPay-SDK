@@ -1,11 +1,14 @@
 import {
-  IUserModel,
-  BigNumberString,
   EVMAccountAddress,
+  EVMAccountAddressSchema,
+  BigNumberStringSchema,
   JSONString,
-  UnixTimestamp,
-  Username,
+  UnixTimestampSchema,
+  UsernameSchema,
+  USDCAmountSchema,
+  IUserModel,
 } from "@1shotapi/1shotpay-common";
+import z from "zod";
 
 export const rpcCallbackEventName = "rpcCallback";
 
@@ -29,28 +32,71 @@ export interface IAuthenticationResult {
   canRetry?: boolean;
 }
 
-export interface ISignInParams {
-  username: Username;
-}
+export const signInParamsSchema = z.object({
+  username: UsernameSchema,
+});
 
-export interface IGetERC3009SignatureParams {
-  recipient: string;
-  destinationAddress: EVMAccountAddress;
-  amount: BigNumberString;
-  validUntil: UnixTimestamp;
-  validAfter: UnixTimestamp;
-}
+export type ISignInParams = z.infer<typeof signInParamsSchema>;
 
-export interface IGetPermitSignatureParams {
-  recipient: string;
-  destinationAddress: EVMAccountAddress;
-  amount: BigNumberString;
-  nonce: BigNumberString;
-  deadlineSeconds: number;
-}
+export const getERC3009SignatureParamsSchema = z.object({
+  recipient: z.string(),
+  destinationAddress: EVMAccountAddressSchema,
+  amount: BigNumberStringSchema,
+  validUntil: UnixTimestampSchema,
+  validAfter: UnixTimestampSchema,
+});
+
+export type IGetERC3009SignatureParams = z.infer<
+  typeof getERC3009SignatureParamsSchema
+>;
+
+export const getPermitSignatureParamsSchema = z.object({
+  recipient: z.string(),
+  destinationAddress: EVMAccountAddressSchema,
+  amount: BigNumberStringSchema,
+  nonce: BigNumberStringSchema,
+  deadlineSeconds: z.number(),
+});
+
+export type IGetPermitSignatureParams = z.infer<
+  typeof getPermitSignatureParamsSchema
+>;
 
 // export interface ICreateDelegationParams {}
 
 export interface IGetAccountAddressResponse {
   accountAddress: EVMAccountAddress;
 }
+
+/**
+ * Params for getSubscription - approve a subscription (delegation) for a 3rd party.
+ * Exactly one of amountPerDay, amountPerWeek, amountPerMonth must be set.
+ * All amount fields must be null/undefined or positive integers (no decimals).
+ */
+export const getSubscriptionParamsSchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+    destinationAccountAddress: EVMAccountAddressSchema,
+    amountPerDay: USDCAmountSchema.optional(),
+    amountPerWeek: USDCAmountSchema.optional(),
+    amountPerMonth: USDCAmountSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      const count = [
+        data.amountPerDay,
+        data.amountPerWeek,
+        data.amountPerMonth,
+      ].filter((x) => x != null).length;
+      return count === 1;
+    },
+    {
+      message:
+        "Exactly one of amountPerDay, amountPerWeek, amountPerMonth must be set",
+    },
+  );
+
+export type IGetSubscriptionParams = z.infer<
+  typeof getSubscriptionParamsSchema
+>;

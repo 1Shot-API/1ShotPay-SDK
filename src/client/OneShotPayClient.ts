@@ -23,16 +23,24 @@ import {
   EVMContractAddress,
   X402V1AcceptedPayment,
   X402V2AcceptedPayment,
+  CAIP2Network,
+  USDCAmount,
 } from "@1shotapi/1shotpay-common";
 import Postmate from "@1shotapi/postmate";
+import { Delegation } from "@metamask/smart-accounts-kit";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 
 import { IOneShotPayClient } from "./IOneShotPayClient";
 import {
+  getERC3009SignatureParamsSchema,
+  getPermitSignatureParamsSchema,
+  getSubscriptionParamsSchema,
+  signInParamsSchema,
   IAuthenticationResult,
   IGetAccountAddressResponse,
   IGetERC3009SignatureParams,
   IGetPermitSignatureParams,
+  IGetSubscriptionParams,
   IRPCWrapperParams,
   IRPCWrapperReturn,
   ISignInParams,
@@ -165,9 +173,14 @@ export class OneShotPayClient implements IOneShotPayClient {
   public signIn(
     username: Username,
   ): ResultAsync<IAuthenticationResult, ProxyError> {
-    return this.rpcCall<IAuthenticationResult, object>("signIn", {
-      username: username,
-    } satisfies ISignInParams);
+    const parsed = signInParamsSchema.safeParse({ username });
+    if (!parsed.success) {
+      return errAsync(new ProxyError(parsed.error));
+    }
+    return this.rpcCall<IAuthenticationResult, ISignInParams>(
+      "signIn",
+      parsed.data,
+    );
   }
 
   public getERC3009Signature(
@@ -177,19 +190,23 @@ export class OneShotPayClient implements IOneShotPayClient {
     validUntil: UnixTimestamp,
     validAfter: UnixTimestamp,
   ): ResultAsync<ISignedERC3009TransferWithAuthorization, ProxyError> {
+    const parsed = getERC3009SignatureParamsSchema.safeParse({
+      recipient,
+      destinationAddress,
+      amount,
+      validUntil,
+      validAfter,
+    });
+    if (!parsed.success) {
+      return errAsync(new ProxyError(parsed.error));
+    }
     return this.rpcCall<
       | ISignedERC3009TransferWithAuthorization
       | { transfer?: ISignedERC3009TransferWithAuthorization },
       IGetERC3009SignatureParams
     >(
       "getERC3009Signature",
-      {
-        recipient,
-        destinationAddress,
-        amount,
-        validUntil,
-        validAfter,
-      } satisfies IGetERC3009SignatureParams,
+      parsed.data,
       true, // requireInteraction: display iframe for user interaction
     ).map((result) => {
       const wrapped = result as {
@@ -213,15 +230,44 @@ export class OneShotPayClient implements IOneShotPayClient {
     nonce: BigNumberString,
     deadlineSeconds: number,
   ): ResultAsync<ISignedPermitTransfer, ProxyError> {
+    const parsed = getPermitSignatureParamsSchema.safeParse({
+      recipient,
+      destinationAddress,
+      amount,
+      nonce,
+      deadlineSeconds,
+    });
+    if (!parsed.success) {
+      return errAsync(new ProxyError(parsed.error));
+    }
     return this.rpcCall<ISignedPermitTransfer, IGetPermitSignatureParams>(
       "getPermitSignature",
-      {
-        recipient,
-        destinationAddress,
-        amount,
-        nonce,
-        deadlineSeconds,
-      } satisfies IGetPermitSignatureParams,
+      parsed.data,
+    );
+  }
+
+  public getSubscription(
+    name: string,
+    description: string,
+    destinationAddress: EVMAccountAddress,
+    amountPerDay: USDCAmount | null,
+    amountPerWeek: USDCAmount | null,
+    amountPerMonth: USDCAmount | null,
+  ): ResultAsync<Delegation, ProxyError> {
+    const parsed = getSubscriptionParamsSchema.safeParse({
+      name,
+      description,
+      destinationAccountAddress: destinationAddress,
+      amountPerDay: amountPerDay ?? undefined,
+      amountPerWeek: amountPerWeek ?? undefined,
+      amountPerMonth: amountPerMonth ?? undefined,
+    });
+    if (!parsed.success) {
+      return errAsync(new ProxyError(parsed.error));
+    }
+    return this.rpcCall<Delegation, IGetSubscriptionParams>(
+      "getSubscription",
+      parsed.data,
     );
   }
 
@@ -530,7 +576,7 @@ export class OneShotPayClient implements IOneShotPayClient {
                   x402Version: 2 as const,
                   accepted: {
                     scheme: "exact" as const,
-                    network: `eip155:${chainId}`,
+                    network: CAIP2Network(`eip155:${chainId}`),
                     asset,
                     amount,
                     payTo,
