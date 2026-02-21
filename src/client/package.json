@@ -1,6 +1,6 @@
 {
   "name": "@1shotapi/1shotpay-client-sdk",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Client SDK for embedding the 1ShotPay passkey wallet in your site",
   "type": "module",
   "main": "./dist/index.js",
@@ -49,7 +49,9 @@
   "dependencies": {
     "@1shotapi/1shotpay-common": "workspace:*",
     "@1shotapi/postmate": "^1.5.5",
+    "@metamask/smart-accounts-kit": "^0.4.0-beta.1",
     "neverthrow": "^8.2.0",
-    "safe-stable-stringify": "^2.5.0"
+    "safe-stable-stringify": "^2.5.0",
+    "zod": "^4.3.6"
   }
 }
