@@ -4,7 +4,9 @@ import {
   BigNumberString,
   ELocale,
   EVMAccountAddress,
+  ProxyError,
   UnixTimestamp,
+  USDCAmount,
 } from "@1shotapi/1shotpay-common";
 
 const statusTextarea = document.getElementById(
@@ -39,6 +41,12 @@ const x402ResponseTextContainer = document.getElementById(
 );
 const x402ResponseText = document.getElementById("x402ResponseText");
 const x402ResponseCopyBtn = document.getElementById("x402ResponseCopyBtn");
+const subName = document.getElementById("subName") as HTMLInputElement | null;
+const subDescription = document.getElementById("subDescription") as HTMLInputElement | null;
+const subDestinationAddress = document.getElementById("subDestinationAddress") as HTMLInputElement | null;
+const subAmount = document.getElementById("subAmount") as HTMLInputElement | null;
+const subPeriod = document.getElementById("subPeriod") as HTMLSelectElement | null;
+const subCreateBtn = document.getElementById("subCreateBtn") as HTMLButtonElement | null;
 
 if (
   !statusTextarea ||
@@ -49,7 +57,13 @@ if (
   !x402VerbSelect ||
   !x402BodyRow ||
   !x402BodyInput ||
-  !x402RequestBtn
+  !x402RequestBtn ||
+  !subName ||
+  !subDescription ||
+  !subDestinationAddress ||
+  !subAmount ||
+  !subPeriod ||
+  !subCreateBtn
 ) {
   throw new Error("Required elements not found");
 }
@@ -95,6 +109,7 @@ oneShotPay
     getAccountAddressBtn.disabled = false;
     toggleFrameBtn.disabled = false;
     x402RequestBtn.disabled = false;
+    subCreateBtn.disabled = false;
     addStatusMessage("Ready! Click the button to get ERC3009 signature.");
   })
   .mapErr((error) => {
@@ -470,4 +485,59 @@ x402RequestBtn.addEventListener("click", () => {
       x402RequestBtn.disabled = false;
     },
   );
+});
+
+// Subscriptions: create subscription (delegation) and log result
+subCreateBtn.addEventListener("click", () => {
+  const name = (subName.value ?? "").trim();
+  const description = (subDescription.value ?? "").trim();
+  let destRaw = (subDestinationAddress.value ?? "").trim();
+  // Normalize double 0x prefix (e.g. placeholder "0x" + pasted address with "0x")
+  if (/^0x0x/i.test(destRaw)) destRaw = "0x" + destRaw.slice(4);
+  const amountRaw = subAmount.value?.trim();
+  const period = (subPeriod.value ?? "day") as "day" | "week" | "month";
+
+  if (!name) {
+    addStatusMessage("Subscriptions: enter a name.", true);
+    return;
+  }
+  if (!destRaw) {
+    addStatusMessage("Subscriptions: enter a destination address.", true);
+    return;
+  }
+  const amountNum = amountRaw ? parseInt(amountRaw, 10) : NaN;
+  if (!Number.isInteger(amountNum) || amountNum < 1) {
+    addStatusMessage("Subscriptions: enter a positive integer amount (USDC smallest units).", true);
+    return;
+  }
+
+  const amount = USDCAmount(amountNum);
+  const amountPerDay = period === "day" ? amount : null;
+  const amountPerWeek = period === "week" ? amount : null;
+  const amountPerMonth = period === "month" ? amount : null;
+
+  subCreateBtn.disabled = true;
+  addStatusMessage(`getSubscription(${name}, ${description || "(no description)"}, ${destRaw}, ${period}=${amountNum})`);
+
+  oneShotPay
+    .getSubscription(
+      name,
+      description,
+      EVMAccountAddress(destRaw),
+      amountPerDay,
+      amountPerWeek,
+      amountPerMonth,
+    )
+    .map((delegation: unknown) => {
+      const payload = JSON.stringify(delegation, null, 2);
+      addStatusMessage("Subscription created (delegation):");
+      addStatusMessage(payload);
+      console.log("Created delegation:", delegation);
+      subCreateBtn.disabled = false;
+    })
+    .mapErr((err: ProxyError) => {
+      addStatusMessage(`getSubscription error: ${err.message}`, true);
+      console.error("getSubscription error:", err);
+      subCreateBtn.disabled = false;
+    });
 });

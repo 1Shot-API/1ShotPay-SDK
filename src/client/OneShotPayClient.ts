@@ -258,9 +258,9 @@ export class OneShotPayClient implements IOneShotPayClient {
       name,
       description,
       destinationAccountAddress: destinationAddress,
-      amountPerDay,
-      amountPerWeek,
-      amountPerMonth,
+      amountPerDay: amountPerDay ?? undefined,
+      amountPerWeek: amountPerWeek ?? undefined,
+      amountPerMonth: amountPerMonth ?? undefined,
     });
     if (!parsed.success) {
       return errAsync(new ProxyError(parsed.error));
