@@ -243,6 +243,7 @@ export class OneShotPayClient implements IOneShotPayClient {
     return this.rpcCall<ISignedPermitTransfer, IGetPermitSignatureParams>(
       "getPermitSignature",
       parsed.data,
+      true, // requireInteraction: display iframe for user interaction
     );
   }
 
@@ -268,6 +269,7 @@ export class OneShotPayClient implements IOneShotPayClient {
     return this.rpcCall<Delegation, IGetSubscriptionParams>(
       "getSubscription",
       parsed.data,
+      true, // requireInteraction: display iframe for user interaction
     );
   }
 
