@@ -1,3 +1,5 @@
+import "./index.css";
+
 import { OneShotPayClient } from "@1shotapi/1shotpay-client-sdk";
 import type { IAuthenticationResult } from "@1shotapi/1shotpay-client-sdk";
 import {
@@ -147,6 +149,9 @@ const modalBackdrop = document.getElementById("modal-backdrop");
 const modalSignature = document.getElementById("modal-signature");
 const modalSignatureJsonContent = document.getElementById("modal-signature-json-content");
 const modalSignatureJson = document.getElementById("modal-signature-json");
+const modalSubscription = document.getElementById("modal-subscription");
+const modalSubscriptionJsonContent = document.getElementById("modal-subscription-json-content");
+const modalSubscriptionJson = document.getElementById("modal-subscription-json");
 const modalX402Json = document.getElementById("modal-x402-json");
 const modalX402JsonText = document.getElementById("modal-x402-json-text");
 const modalX402JsonContent = document.getElementById("modal-x402-json-content");
@@ -176,6 +181,7 @@ function closeModals() {
   setTimeout(() => {
     modalBackdrop?.classList.add("hidden");
     modalSignature?.classList.add("hidden");
+    modalSubscription?.classList.add("hidden");
     modalX402Json?.classList.add("hidden");
     modalX402Image?.classList.add("hidden");
     modalAccount?.classList.add("hidden");
@@ -189,6 +195,7 @@ function closeModals() {
 function showAccountModal(userOrAddress: { username?: string; accountAddress: string; profileText?: string | null; profileImageUrl?: string | null } | string) {
   if (!modalBackdrop || !modalAccount || !modalAccountAddressText) return;
   modalSignature?.classList.add("hidden");
+  modalSubscription?.classList.add("hidden");
   modalX402Json?.classList.add("hidden");
   modalX402Image?.classList.add("hidden");
 
@@ -238,6 +245,7 @@ function showSignatureModal(payload: object) {
   if (!modalBackdrop || !modalSignature || !modalSignatureJsonContent || !modalSignatureJson) return;
   modalX402Json?.classList.add("hidden");
   modalX402Image?.classList.add("hidden");
+  modalSubscription?.classList.add("hidden");
   const jsonStr = JSON.stringify(payload, null, 2);
   modalSignatureJsonContent.textContent = jsonStr;
   modalSignatureJson.dataset.json = jsonStr;
@@ -256,12 +264,37 @@ function copySignatureJson() {
   }
 }
 
+function showSubscriptionModal(delegation: unknown) {
+  if (!modalBackdrop || !modalSubscription || !modalSubscriptionJsonContent || !modalSubscriptionJson) return;
+  modalSignature?.classList.add("hidden");
+  modalX402Json?.classList.add("hidden");
+  modalX402Image?.classList.add("hidden");
+  const jsonStr = JSON.stringify(delegation, null, 2);
+  modalSubscriptionJsonContent.textContent = jsonStr;
+  modalSubscriptionJson.dataset.json = jsonStr;
+  modalAccount?.classList.add("hidden");
+  modalBackdrop.classList.remove("hidden");
+  modalBackdrop.classList.remove("opacity-0");
+  modalSubscription.classList.remove("hidden");
+  (window as unknown as { lucide?: { createIcons: () => void } }).lucide?.createIcons?.();
+}
+
+function copySubscriptionJson() {
+  const json = modalSubscriptionJson?.dataset.json;
+  if (json) {
+    void navigator.clipboard.writeText(json);
+    addStatusMessage("Delegation JSON copied to clipboard.");
+  }
+}
+
 modalBackdrop?.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeModals();
 });
 document.getElementById("modal-account-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-signature-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-signature-close-btn")?.addEventListener("click", closeModals);
+document.getElementById("modal-subscription-close")?.addEventListener("click", closeModals);
+document.getElementById("modal-subscription-close-btn")?.addEventListener("click", closeModals);
 document.getElementById("modal-x402-image-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-x402-json-close")?.addEventListener("click", closeModals);
 document.getElementById("modal-x402-json-close-btn")?.addEventListener("click", closeModals);
@@ -276,6 +309,8 @@ document.getElementById("modal-x402-json-copy-btn")?.addEventListener("click", c
 modalX402JsonContent?.addEventListener("click", copyX402JsonModal);
 modalSignatureJson?.addEventListener("click", copySignatureJson);
 document.getElementById("modal-signature-copy-btn")?.addEventListener("click", copySignatureJson);
+modalSubscriptionJson?.addEventListener("click", copySubscriptionJson);
+document.getElementById("modal-subscription-copy-btn")?.addEventListener("click", copySubscriptionJson);
 modalAccountAddress?.addEventListener("click", () => {
   const fullAddress = modalAccountAddressText?.dataset.fullAddress;
   if (fullAddress) {
@@ -428,6 +463,7 @@ x402RequestBtn.addEventListener("click", () => {
           }
           modalAccount?.classList.add("hidden");
           modalSignature?.classList.add("hidden");
+          modalSubscription?.classList.add("hidden");
           modalBackdrop?.classList.remove("hidden");
           modalBackdrop?.classList.remove("opacity-0");
           modalX402Image?.classList.remove("hidden");
@@ -464,6 +500,7 @@ x402RequestBtn.addEventListener("click", () => {
           modalX402JsonText.dataset.copyText = displayText;
           modalAccount?.classList.add("hidden");
           modalSignature?.classList.add("hidden");
+          modalSubscription?.classList.add("hidden");
           modalX402Image?.classList.add("hidden");
           modalBackdrop?.classList.remove("hidden");
           modalBackdrop?.classList.remove("opacity-0");
@@ -529,11 +566,10 @@ subCreateBtn.addEventListener("click", () => {
       amountPerMonth,
     )
     .map((delegation: unknown) => {
-      const payload = JSON.stringify(delegation, null, 2);
-      addStatusMessage("Subscription created (delegation):");
-      addStatusMessage(payload);
+      addStatusMessage("Subscription created (delegation).");
       console.log("Created delegation:", delegation);
       subCreateBtn.disabled = false;
+      showSubscriptionModal(delegation);
     })
     .mapErr((err: ProxyError) => {
       addStatusMessage(`getSubscription error: ${err.message}`, true);

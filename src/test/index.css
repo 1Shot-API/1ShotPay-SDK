@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.code-block {
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.custom-scroll-dark::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.custom-scroll-dark::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.custom-scroll-dark::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+.indicator-dot.active {
+  background: #239aaa;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.indicator-dot.complete {
+  background: #1e7d8b;
+}
+
+.indicator-dot.error {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+#Wallet {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+}
