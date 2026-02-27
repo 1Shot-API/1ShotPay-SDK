@@ -19,7 +19,9 @@ import {
   ELocale,
   EVMAccountAddress,
   UnixTimestamp,
+  USDCAmount,
 } from "@1shotapi/1shotpay-common";
+import { Delegation } from "@metamask/smart-accounts-kit";
 
 const wallet = new OneShotPayClient();
 
@@ -47,11 +49,28 @@ const result = await wallet
       throw err;
     },
   );
+
+// Get a subscription payment (delegation). Pass at least one of amountPerDay, amountPerWeek, amountPerMonth.
+const delegation = await wallet
+  .getSubscription(
+    "Premium plan",
+    "Monthly access to premium features",
+    EVMAccountAddress("0x..."),
+    null,
+    null,
+    USDCAmount("9.99"),
+  )
+  .match(
+    (ok) => ok,
+    (err) => {
+      throw err;
+    },
+  );
 ```
 
 ## API overview
 
-- **OneShotPayClient** — main class; `initialize()`, `getStatus()`, `signIn()`, `signOut()`, `getAccountAddress()`, `getERC3009Signature()`, `getPermitSignature()`, `x402Fetch()`, `show()`, `hide()`, `getVisible()`.
+- **OneShotPayClient** — main class; `initialize()`, `getStatus()`, `signIn()`, `signOut()`, `getAccountAddress()`, `getERC3009Signature()`, `getSubscription()`, `getPermitSignature()`, `x402Fetch()`, `show()`, `hide()`, `getVisible()`.
 - **Visibility:** `show()` / `hide()` control the iframe modal; `getVisible()` returns whether it is shown.
 - **Iframe events:** `closeFrame` (user closes UI), `registrationRequired` (open registration URL in a new tab).
 
