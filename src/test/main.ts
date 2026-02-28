@@ -405,6 +405,16 @@ function copyX402ResponseText() {
 x402ResponseTextContainer?.addEventListener("click", copyX402ResponseText);
 x402ResponseCopyBtn?.addEventListener("click", copyX402ResponseText);
 
+function isLikelyCorsBlockedError(error: { message?: string } | null | undefined): boolean {
+  const message = (error?.message ?? "").toLowerCase();
+  return (
+    message.includes("cors") ||
+    message.includes("cross-origin") ||
+    message.includes("failed to fetch") ||
+    message.includes("networkerror")
+  );
+}
+
 // x402 request handler
 x402RequestBtn.addEventListener("click", () => {
   const url = (x402UrlInput.value || "").trim();
@@ -517,6 +527,11 @@ x402RequestBtn.addEventListener("click", () => {
       x402RequestBtn.disabled = false;
     },
     (err) => {
+      if (isLikelyCorsBlockedError(err)) {
+        window.alert(
+          "The request was blocked by the endpoint's CORS policy.",
+        );
+      }
       addStatusMessage(`x402Fetch error: ${err.message}`, true);
       console.error("x402Fetch error:", err);
       x402RequestBtn.disabled = false;
