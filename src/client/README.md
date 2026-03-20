@@ -37,9 +37,9 @@ wallet.hide();
 
 const result = await wallet
   .getERC3009Signature(
-    "Some recipient",
-    EVMAccountAddress("0x..."),
-    BigNumberString("1"),
+    "Some recipient", // 1ShotPay counterparty title
+    EVMAccountAddress("0x..."), // destination address
+    BigNumberString("1"), // amount in atomic units of USDC (1000000 = $1)
     UnixTimestamp(1715222400),
     UnixTimestamp(1715222400),
   )
@@ -49,6 +49,20 @@ const result = await wallet
       throw err;
     },
   );
+
+// Pay for a 402-protected API (retries with payment if server returns 402).
+const response = await wallet
+  .x402Fetch("https://api.example.com/paid-resource")
+  .match(
+    (ok) => ok,
+    (err) => {
+      throw err;
+    },
+  );
+if (response.ok) {
+  const data = await response.json();
+  // use data
+}
 
 // Get a subscription payment (delegation). Pass at least one of amountPerDay, amountPerWeek, amountPerMonth.
 const delegation = await wallet
