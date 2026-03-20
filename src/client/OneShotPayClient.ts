@@ -23,7 +23,6 @@ import {
   EVMContractAddress,
   X402V1AcceptedPayment,
   X402V2AcceptedPayment,
-  CAIP2Network,
   USDCAmount,
 } from "@1shotapi/1shotpay-common";
 import Postmate from "@1shotapi/postmate";
@@ -576,15 +575,7 @@ export class OneShotPayClient implements IOneShotPayClient {
             const xPaymentObject = isV2
               ? ({
                   x402Version: 2 as const,
-                  accepted: {
-                    scheme: "exact" as const,
-                    network: CAIP2Network(`eip155:${chainId}`),
-                    asset,
-                    amount,
-                    payTo,
-                    maxTimeoutSeconds,
-                    extra: {},
-                  },
+                  accepted: exact as X402V2AcceptedPayment,
                   payload,
                   resource: paymentRequirements.resource,
                 } satisfies X402V2PaymentPayloadExactEvm)
